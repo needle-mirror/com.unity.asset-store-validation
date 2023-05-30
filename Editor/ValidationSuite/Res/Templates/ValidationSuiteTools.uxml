@@ -1,0 +1,15 @@
+<UXML xmlns:ui="UnityEngine.Experimental.UIElements">
+    <ui:VisualElement name="ASValidationSuiteUIContainer">
+      <ui:VisualElement name="ASValidationActionContainer">
+        <ui:Button name="ASvalidateButton" text="Validate"/>
+        <ui:Label name="ASvalidationResults"/>
+        <ui:Button name="ASValidateTypeDownArrow" text="▼"/>
+        <ui:VisualElement name="ASValidationTypeDropdown"/>
+      </ui:VisualElement>
+      <ui:VisualElement name="ASValidationResultsContainer">
+        <ui:Button name="ASviewResults" text="View Results"/>
+        <ui:Button name="ASviewdiff" text="View Diff"/>
+      </ui:VisualElement>
+
+    </ui:VisualElement>
+</UXML>

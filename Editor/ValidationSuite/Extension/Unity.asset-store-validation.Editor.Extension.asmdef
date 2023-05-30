@@ -1,0 +1,24 @@
+{
+    "name": "Unity.asset-store-validation.Editor.Extension",
+    "rootNamespace": "",
+    "references": [
+        "Unity.asset-store-validation.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.upm.develop",
+            "expression": "",
+            "define": "UNITY_PACKAGE_MANAGER_DEVELOP_EXISTS"
+        }
+    ],
+    "noEngineReferences": false
+}
