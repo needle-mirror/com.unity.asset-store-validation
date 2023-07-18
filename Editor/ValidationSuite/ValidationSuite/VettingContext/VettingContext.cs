@@ -20,6 +20,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         public ManifestData ProjectPackageInfo { get; set; }
         public ManifestData PublishPackageInfo { get; set; }
         public ManifestData PreviousPackageInfo { get; set; }
+        public float PublishPackageSizeMb { get; set; }
         public string[] AllVersions { get; set; }
 
         public ManifestData VSuiteInfo { get; set; }
@@ -83,13 +84,12 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
 
                     ActivityLogger.Log($"Checking if package {packageInfo.packageId} exists in the Unity registry");
                     context.PackageVersionExistsOnProduction =
-                        Utilities.PackageExistsOnProduction(packageInfo.packageId);
+                        Utilities.PackageExistsOnProduction(packageInfo.packageId, packageInfo.version);
                     ActivityLogger.Log(
                         $"Package {packageInfo.packageId} {(context.PackageExistsOnProduction ? "is" : "is not")} in the Unity registry");
                 }
-                catch (Exception e)
+                catch (Exception e) when (e is ApplicationException or NpmUnusableException)
                 {
-
                     ActivityLogger.Log($"An error occurred when trying to verify if the package already exists in the Unity registry\n{e}");
                 }
             }
@@ -130,6 +130,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
 
                 // List out available versions for a package
                 var foundPackages = Utilities.UpmSearch(context.ProjectPackageInfo.name);
+                
+                ActivityLogger.Log($"Search of {context.ProjectPackageInfo.name} finished. Upm found {foundPackages.Length} matches");
 
                 // If it exists, get the last one from that list.
                 if (foundPackages != null && foundPackages.Length > 0)
@@ -249,6 +251,11 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             //Use upm-template-tools package-ci
             var packagesGenerated = PackageCIUtils.Pack(packagePath, tempPath);
 
+            if (packagesGenerated != null && packagesGenerated.Count > 0)
+            {
+                context.PublishPackageSizeMb = (new FileInfo(packagesGenerated[0]).Length / 1024f) / 1024f;
+            }
+
             var publishPackagePath = Path.Combine(tempPath, "publish-" + context.ProjectPackageInfo.Id);
             var deleteOutput = true;
             foreach (var packageTgzName in packagesGenerated)
@@ -278,9 +285,17 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
 
             foreach (var prevVersion in previousVersions)
             {
-                if (Utilities.PackageExistsOnProduction(packageInfo.name + "@" + prevVersion))
+                try
                 {
-                    previousVersion = prevVersion;
+                    if (Utilities.PackageExistsOnProduction(packageInfo.name + "@" + prevVersion))
+                    {
+                        previousVersion = prevVersion;
+                        break;
+                    }    
+                }
+                catch (Exception e) when (e is NpmUnusableException or ApplicationException)
+                {
+                    ActivityLogger.Log(e.Message);
                     break;
                 }
             }

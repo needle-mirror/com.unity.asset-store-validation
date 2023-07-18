@@ -30,8 +30,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public AssembliesDefinitionValidation()
         {
-            TestName = "Assemblies Definition Validation";
-            TestDescription = "Validates that the package assemblies definition meets certain criteria.";
+            TestName = "Assemblies Definition";
+            TestDescription = "Validates that the package assemblies definition have asociated scripts and that scripts are associated to assemblies.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };
 

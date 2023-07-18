@@ -19,6 +19,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         Promotion,
         /// <summary>Validation for the asset store.</summary>
         AssetStore,
+        /// <summary>Validation to meet the condition to publish to the asset store.</summary>
+        AssetStorePublishAction,
         /// <summary>Running just tests marked for InternalTesting</summary>
         InternalTesting,
         /// <summary>Validation for the structure of the package</summary>

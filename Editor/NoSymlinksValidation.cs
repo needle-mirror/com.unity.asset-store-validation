@@ -13,7 +13,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public NoSymlinksValidation()
         {
-            TestName = "No Symlinks Validation";
+            TestName = "No Symlinks";
             TestDescription = "A package must not contain any symbolic links or shortcuts to other files.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] {ValidationType.AssetStore};

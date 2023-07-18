@@ -49,8 +49,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public ChangelogValidation()
         {
-            TestName = "Changelog Validation";
-            TestDescription = "Validates that the package contains a valid CHANGELOG.md or link to a changelog online.";
+            TestName = "Changelog";
+            TestDescription = "Validates that the package contains a valid CHANGELOG.md or links to a changelog online.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] { ValidationType.AssetStore };
             m_HttpUtils = new HttpUtils();

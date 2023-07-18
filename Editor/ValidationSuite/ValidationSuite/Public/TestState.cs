@@ -14,6 +14,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         /// <summary>The test is currently running.</summary>
         Running,
         /// <summary>The test is not yet implemented and should be skipped.</summary>
-        NotImplementedYet
+        NotImplementedYet,
+        /// <summary>The test finished with warnings.</summary>
+        Warning
     }
 }

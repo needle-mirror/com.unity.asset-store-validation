@@ -109,6 +109,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.UI
 
             ValidationChoices.Add(ValidationTypeDropdown.StructureLabelText);
             ValidationChoices.Add(ValidationTypeDropdown.AssetStoreLabelText);
+            ValidationChoices.Add(ValidationTypeDropdown.AssetStorePublishOperationText);
         }
 
         void Validate()

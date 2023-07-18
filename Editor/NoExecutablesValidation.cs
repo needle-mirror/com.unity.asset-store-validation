@@ -49,7 +49,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public NoExecutablesValidation()
         {
-            TestName = "No Executables Validation";
+            TestName = "No Executables";
             TestDescription = "Validates that the package does not include restricted executable files.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] {ValidationType.AssetStore};

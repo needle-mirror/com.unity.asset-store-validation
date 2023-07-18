@@ -19,7 +19,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public AssetStorePublisherValidation()
         {
-            TestName = "Asset Store Publisher Validation";
+            TestName = "Asset Store Publisher";
             TestDescription = "Validates that the package belongs to the publisher.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new ValidationType[] {ValidationType.AssetStore};

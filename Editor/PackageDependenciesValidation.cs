@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -46,10 +47,10 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public PackageDependenciesValidation()
         {
-            TestName = "Package Dependencies Validation";
-            TestDescription = "Validate that the package dependencies are useful and complete";
+            TestName = "Package Dependencies";
+            TestDescription = "Validate that the package dependencies are useful and complete.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] {ValidationType.AssetStore};
+            SupportedValidations = Array.Empty<ValidationType>();
             m_PackageInfoHelper = new PackageInfoHelper();
         }
 

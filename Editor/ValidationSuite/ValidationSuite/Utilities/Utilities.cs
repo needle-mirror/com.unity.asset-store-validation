@@ -78,11 +78,11 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             while (!request.IsCompleted)
             {
                 if (Utilities.NetworkNotReachable)
-                    throw new Exception("Failed to fetch package infomation: network not reachable");
+                    throw new Exception("Failed to fetch package information: network not reachable");
                 Thread.Sleep(100);
             }
             if (throwOnRequestFailure && request.Status == StatusCode.Failure)
-                throw new Exception("Failed to fetch package infomation.  Error details: " + request.Error.errorCode + " " + request.Error.message);
+                throw new Exception("Failed to fetch package information.  Error details: " + request.Error.errorCode + " " + request.Error.message);
             Profiler.EndSample();
             return request.Result;
         }
@@ -133,7 +133,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             return packageName;
         }
 
-        internal static bool PackageExistsOnProduction(string packageId)
+        internal static bool PackageExistsOnProduction(string packageId, string version = null)
         {
             var launcher = new NodeLauncher();
             launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
@@ -144,14 +144,16 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             }
             catch (ApplicationException exception)
             {
-                if (exception.Message.Contains("npm ERR! code E404") && exception.Message.Contains("is not in the npm registry."))
+                if (exception.Message.Contains("npm ERR! code E404") &&
+                    exception.Message.Contains("is not in the npm registry."))
                     return false;
                 exception.Data["code"] = "fetchFailed";
-                throw exception;
+                throw;
             }
 
             var packageData = launcher.OutputLog.ToString().Trim();
-            return !string.IsNullOrEmpty(packageData);
+
+            return !string.IsNullOrEmpty(packageData) && (version == null || packageData.Contains(version));
         }
 
         /// <summary>

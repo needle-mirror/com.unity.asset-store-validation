@@ -3,24 +3,26 @@ using System.Net.Http;
 
 class HttpUtils: IReachable
 {
+    internal const int k_TimeoutSeconds = 100; // Default timeout
+
     /// <summary>
     /// Makes a request to the given URL, returning true if the status code of the request is HttpStatusCode.OK
     /// </summary>
     /// <param name="url"></param>
+    /// <param name="timeoutSeconds">Seconds to use as timeout setting for the HttpClient instance</param>
     /// <returns></returns>
-    public bool IsURLReachable(string url)
+    public bool IsURLReachable(string url, int timeoutSeconds = k_TimeoutSeconds)
     {
-        using (var httpclient = new HttpClient())
+        using var httpclient = new HttpClient() { Timeout = TimeSpan.FromSeconds(timeoutSeconds) };
+        
+        try
         {
-            try
-            {
-                var response = httpclient.SendAsync(new HttpRequestMessage(HttpMethod.Head, url)).Result;
-                return response.StatusCode == System.Net.HttpStatusCode.OK;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            var response = httpclient.SendAsync(new HttpRequestMessage(HttpMethod.Head, url)).Result;
+            return response.StatusCode == System.Net.HttpStatusCode.OK;
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 }

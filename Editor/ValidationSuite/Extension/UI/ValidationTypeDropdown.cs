@@ -6,7 +6,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.UI
     class ValidationTypeDropdown
     {
         public const string StructureLabelText = "Structure";
-        public const string AssetStoreLabelText = "Against Asset Store standards";
+        public const string AssetStorePublishOperationText = "Asset Store publish";
+        public const string AssetStoreLabelText = "Asset Store standards";
 
         public static List<string> ToList()
         {
@@ -21,6 +22,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.UI
                         choiceText = StructureLabelText;
                         break;
                     case ValidationType.AssetStore:
+                        choiceText = AssetStoreLabelText;
+                        break;
+                    case ValidationType.AssetStorePublishAction:
                         choiceText = AssetStoreLabelText;
                         break;
                     default:
@@ -42,6 +46,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.UI
                     return ValidationType.Structure;
                 case AssetStoreLabelText:
                     return ValidationType.AssetStore;
+                case AssetStorePublishOperationText:
+                    return ValidationType.AssetStorePublishAction;
                 default:
                     throw new NotImplementedException();
             }

@@ -18,8 +18,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public PathLengthValidation()
         {
-            TestName = "Path Length Validation";
-            TestDescription = $"Ensure that any file and folder paths should not exceed {k_MaxPathLength} characters";
+            TestName = "Path Length";
+            TestDescription = $"Ensure that any file and folder paths should not exceed {k_MaxPathLength} characters.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] {ValidationType.AssetStore};
         }

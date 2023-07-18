@@ -59,6 +59,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                 i++;
             }
 
+            testReports = testReports.OrderBy(i => i.TestName).ToArray();
+
             return testReports;
         }
 
@@ -125,7 +127,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         /// <returns></returns>
         public static ValidationSuiteReportData GetReport(string packageId)
         {
-            if (JsonReportExists(packageId))
+            if (!JsonReportExists(packageId))
                 return null;
 
             return Utilities.GetDataFromJson<ValidationSuiteReportData>(GetJsonReportPath(packageId));

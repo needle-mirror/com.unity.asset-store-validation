@@ -28,7 +28,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public NoJpgsValidation()
         {
-            TestName = "No Jpgs Validation";
+            TestName = "No Jpgs";
             TestDescription = "A package must not contain any jpgs outside of the Documentation~ and Tests folders.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] {ValidationType.AssetStore};

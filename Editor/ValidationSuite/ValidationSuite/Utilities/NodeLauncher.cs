@@ -16,6 +16,10 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
     {
         static string _nodePath;
         static string _npmScriptPath;
+        
+        // Used to flag npm as completely unusable when critical errors are detected. E.g. certificate error in the machine
+        internal static bool canUseNpm = true;
+        internal static string npmDisableMessage;
 
         static string NodePath
         {
@@ -117,6 +121,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             if (string.IsNullOrEmpty(Script))
                 throw new Exception("No node script set to run;");
 
+            if (!canUseNpm)
+                throw new NpmUnusableException(npmDisableMessage);
+
             Process.StartInfo.Arguments = "\"" + Script + "\" " + Args;
 
             using (var outputWaitHandle = new AutoResetEvent(false))
@@ -162,6 +169,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     if (Process.ExitCode != 0)
                     {
                         var message = "Launching script {0} has failed with args: {1}\nOutput: {2}\nError: {3}";
+                        canUseNpm = false;
+                        npmDisableMessage = message;
                         throw new ApplicationException(string.Format(message, Script, Args, OutputLog, ErrorLog));
                     }
                 }
@@ -171,6 +180,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     if (offline)
                     {
                         var message = "Launching npm has failed with args: {0}\nError: Network not reachable";
+                        canUseNpm = false;
+                        npmDisableMessage = message;
                         throw new ApplicationException(string.Format(message, Args));
                     }
                     else

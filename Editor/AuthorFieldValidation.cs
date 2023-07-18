@@ -11,6 +11,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal const int k_AuthorNameMaxLengthLimit = 512;
         internal const int k_EmailMaxLengthLimit = 320;
         internal const int k_UrlMaxLengthLimit = 2048;
+        const int k_UrlCheckTimeoutSeconds = 4;
 
         static readonly string s_DocsFilePath = "author_field_validation.html";
 
@@ -59,8 +60,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public AuthorFieldValidation()
         {
-            TestName = "Author Name Field Validation";
-            TestDescription = "Validates that the package author name field meets certain criteria.";
+            TestName = "Manifest: Author Name Field";
+            TestDescription = "Validates that the package author name field is valid.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new ValidationType[] { ValidationType.Structure, ValidationType.AssetStore };
         }
@@ -166,7 +167,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         {
             if (HttpUtils == null)
                 HttpUtils = new HttpUtils();
-            return HttpUtils.IsURLReachable(url);
+            return HttpUtils.IsURLReachable(url, k_UrlCheckTimeoutSeconds);
         }       
     }
 }

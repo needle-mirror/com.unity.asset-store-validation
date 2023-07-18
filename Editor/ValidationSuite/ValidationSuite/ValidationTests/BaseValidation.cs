@@ -61,7 +61,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.Valida
 
             return baseType;
         }
-        
+
         protected BaseValidation()
         {
             TestState = TestState.NotRun;
@@ -83,7 +83,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.Valida
         {
             ActivityLogger.Log("Starting validation test \"{0}\"", TestName);
             StartTime = DateTime.Now;
-            
+
             Run();
 
             EndTime = DateTime.Now;
@@ -97,12 +97,16 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.Valida
         public void AddError(string message)
         {
             TestOutput.Add(new ValidationTestOutput() { Type = TestOutputType.Error, Output = message });
-                TestState = TestState.Failed;
+            TestState = TestState.Failed;
         }
 
         protected void AddWarning(string message)
         {
             TestOutput.Add(new ValidationTestOutput() { Type = TestOutputType.Warning, Output = message });
+            
+            // We do not want a warning to override errors, so the test shouldn't be flagged as Warning if it has failed already
+            if (TestState == TestState.Failed) return;
+            TestState = TestState.Warning;
         }
 
         protected void AddInformation(string message)

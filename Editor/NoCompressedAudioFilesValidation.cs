@@ -16,7 +16,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         
         public NoCompressedAudioFilesValidation()
         {
-            TestName = "No Compressed Audio Files Validation";
+            TestName = "No Compressed Audio Files";
             TestDescription = "A package must not contain any lossy compressed audio files.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] {ValidationType.AssetStore};

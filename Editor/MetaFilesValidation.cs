@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public MetaFilesValidation()
         {
-            TestName = "Meta Files Validation: ASV";
+            TestName = "Meta Files";
             TestDescription = "Validate that metafiles are present for all package files and that no useless metafiles exist.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore};

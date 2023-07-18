@@ -45,14 +45,14 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static readonly string k_MissingFolder =
             "Folder {0} is missing from the samples. " + ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "folder-is-missing-from-the-samples");
 
-        internal static readonly string k_EmptyDescription =
-            $"Empty description property for sample. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "empty-property-for-sample")}";
+        internal static string EmptyDescription(string displayName) =>
+            $"Empty description property for sample with displayName \"{displayName}\". {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "empty-property-for-sample")}";
 
-        internal static readonly string k_EmptyPath =
-            $"Empty path property for sample. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "empty-property-for-sample")}";
+        internal static string EmptyPath(string displayName) =>
+            $"Empty path property for sample with displayName \"{displayName}\". {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "empty-property-for-sample")}";
 
-        internal static readonly string k_EmptyDisplay =
-            $"Empty display property for sample. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "empty-property-for-sample")}";
+        internal static string EmptyDisplayName(string path) =>
+            $"Empty display property for sample with path \"{path}\". {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "empty-property-for-sample")}";
 
         internal static readonly string k_DuplicatedDescription =
             "Duplicated description : {0}. " + ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "duplicated-description");
@@ -73,8 +73,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public SamplesStructureValidation()
         {
-            TestName = "Samples Validation";
-            TestDescription = "Verify that samples meet expectation, if the package has samples.";
+            TestName = "Samples";
+            TestDescription = "Verify that samples meet expectations, if the package has samples.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };
         }
@@ -92,15 +92,15 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
                 ValidateSampleFolderContent(samplesTildeFolderLocation);
                 return;
             }
-            else if (Context.PublishPackageInfo.samples.Any())
+            if (Context.PublishPackageInfo.samples.Any())
             {
-                // If a package has samples, it should have a sample section in the package.json file
+                // No Samples~ folder, but there is an entry in the manifest
                 AddError(k_MissingSamplesFolder);
                 return;
             }
-            else if (samplesTildeDirExists)
+            if (samplesTildeDirExists)
             {
-                // If a package has no samples, there shouldn't exist a Samples~ folder nor an entry in the package manifest
+                // Samples~ exist but no entry in the package manifest
                 AddError(string.Format(k_SamplesArrayNotFound, Context.PublishPackageInfo.path));
                 return;
             }
@@ -200,7 +200,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
                 }
 
                 // remove already processed files to reduce search
-                usableFiles = usableFiles.Where(x => filesPartOfThatFolder.Any(z => z.FullName != x.FullName)).ToList();
+                usableFiles.RemoveAll(x => filesPartOfThatFolder.Any(z => z.FullName == x.FullName));
             }
 
             return usableFiles;
@@ -237,25 +237,35 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
             foreach (var sampleData in Context.PublishPackageInfo.samples)
             {
-                // If a package has samples, the entry in the package manifest should contain at least this structure: {path, displayName, description} 
-                ValidateSamplesProperty(sampleData.description, k_EmptyDescription);
-
-                ValidateSamplesProperty(sampleData.displayName, k_EmptyDisplay);
-
-                ValidateHashSet(description, sampleData.description,
-                    string.Format(k_DuplicatedDescription, sampleData.description));
-
-                ValidateHashSet(path, sampleData.path, string.Format(k_DuplicatedPath, sampleData.path));
-
-                ValidateHashSet(displayName, sampleData.displayName,
-                    string.Format(k_DuplicatedDisplayName, sampleData.displayName));
-
+                // if no path is set, error + skip the rest
                 if (string.IsNullOrWhiteSpace(sampleData.path))
                 {
-                    AddError(k_EmptyPath);
+                    AddError(EmptyPath(sampleData.displayName));
                     continue;
                 }
-
+                
+                // If a package has samples, the entry in the package manifest should contain at least this structure: {path, displayName, description} 
+                ValidateSamplesProperty(sampleData.description, EmptyDescription(sampleData.displayName));
+                ValidateSamplesProperty(sampleData.displayName, EmptyDisplayName(sampleData.path));
+                
+                // find duplicate description
+                if (!string.IsNullOrWhiteSpace(sampleData.description))
+                {
+                    ValidateHashSet(description, sampleData.description,
+                        string.Format(k_DuplicatedDescription, sampleData.description));
+                }
+                // find duplicate path
+                if (!string.IsNullOrWhiteSpace(sampleData.path))
+                {
+                    ValidateHashSet(path, sampleData.path, string.Format(k_DuplicatedPath, sampleData.path));
+                }
+                // find duplicate display name
+                if (!string.IsNullOrWhiteSpace(sampleData.displayName))
+                {
+                    ValidateHashSet(displayName, sampleData.displayName,
+                        string.Format(k_DuplicatedDisplayName, sampleData.displayName));
+                }
+                
                 // If a package has samples, then they should be in a folder called Samples~
                 var rootPath = sampleData.path.Split(new[] { Path.DirectorySeparatorChar },
                     StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();

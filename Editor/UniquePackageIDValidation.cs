@@ -14,10 +14,10 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public UniquePackageIDValidation()
         {
-            TestName = "Unique Package ID Validation";
+            TestName = "Unique Package ID";
             TestDescription = "A package id (name@version) must not already exist on the Asset Store Registry when trying to publish a new version.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] {ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.AssetStore, ValidationType.AssetStorePublishAction};
             m_UpmRegistryHelper = new UpmRegistryHelper();
         }
 

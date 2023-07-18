@@ -47,7 +47,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         public DocumentationValidation()
         {
-            TestName = "Documentation Validation";
+            TestName = "Documentation";
             TestDescription = "A package must contain basic usage documentation for consumers.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };

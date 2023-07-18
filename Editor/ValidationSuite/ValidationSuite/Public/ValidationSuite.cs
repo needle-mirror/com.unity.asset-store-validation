@@ -67,7 +67,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
 
         internal IEnumerable<BaseValidation> ValidationTests
         {
-            get { return validationTests.Where(test => (test.SupportedValidations.Contains(context.ValidationType) && test.SupportedPackageTypes.Contains(context.PackageType))); }
+            get { return validationTests.Where(test => (test.SupportedValidations.Contains(context.ValidationType) && test.SupportedPackageTypes.Contains(context.PackageType) && test.ShouldRun)); }
             set { validationTests = value; }
         }
 
