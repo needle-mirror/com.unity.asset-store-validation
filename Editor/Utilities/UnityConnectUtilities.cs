@@ -1,9 +1,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using UnityEditor.Connect;
-using UnityEngine;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
@@ -57,12 +55,12 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         }
 
         /// <summary>
-        /// This method return true if the user is login.
+        /// This method return true if the user is logged in.
         /// </summary>
         /// <returns>Return true if the user is login, otherwise false</returns>
-        public static bool IsUserLogin()
+        public static bool IsUserLoggedIn()
         {
-            return (!string.IsNullOrWhiteSpace(Environment.UserName));
+            return !string.IsNullOrWhiteSpace(CloudProjectSettings.userId);
         }
 
         /// <summary>

@@ -20,7 +20,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestDescription = "Verify that the Asset Store publisher account exists.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.AssetStorePublishAction };
-            DependsOn = new[] { typeof(IsUserLoginPublishValidation) };
+            DependsOn = new[] { typeof(IsUserLoggedInPublishValidation) };
             m_AssetStorePublishOperationValidationUtility = new AssetStorePublishOperationValidationUtility();
         }
 

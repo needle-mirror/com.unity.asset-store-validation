@@ -3,7 +3,7 @@ using System.Net.Http;
 
 class HttpUtils: IReachable
 {
-    internal const int k_TimeoutSeconds = 100; // Default timeout
+    internal const int k_TimeoutSeconds = 50; // Default timeout
 
     /// <summary>
     /// Makes a request to the given URL, returning true if the status code of the request is HttpStatusCode.OK

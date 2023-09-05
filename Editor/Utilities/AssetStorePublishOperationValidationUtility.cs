@@ -24,9 +24,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             return UnityConnectUtilities.HasUserPublisherId;
         }
 
-        public bool IsUserLogin()
+        public bool IsUserLoggedIn()
         {
-            return UnityConnectUtilities.IsUserLogin();
+            return UnityConnectUtilities.IsUserLoggedIn();
         }
     }
 }

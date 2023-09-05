@@ -19,7 +19,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestDescription = "Verify that the publisher has already accepted the Asset Store terms of service.";
             TestCategory = TestCategory.ContentScan;
             SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.AssetStorePublishAction };
-            DependsOn = new[] { typeof(IsUserLoginPublishValidation) };
+            DependsOn = new[] { typeof(IsUserLoggedInPublishValidation) };
             m_AssetStorePublishOperationValidationUtility = new AssetStorePublishOperationValidationUtility();
         }
 

@@ -81,7 +81,6 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     context.PackageExistsOnProduction = Utilities.PackageExistsOnProduction(packageInfo.name);
                     ActivityLogger.Log(
                         $"Package {packageInfo.name} {(context.PackageExistsOnProduction ? "is" : "is not")} in the Unity registry");
-
                     ActivityLogger.Log($"Checking if package {packageInfo.packageId} exists in the Unity registry");
                     context.PackageVersionExistsOnProduction =
                         Utilities.PackageExistsOnProduction(packageInfo.packageId, packageInfo.version);
@@ -127,12 +126,12 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             if (context.ValidationType != ValidationType.VerifiedSet)
             {
                 ActivityLogger.Log("Looking for previous package version");
-
+            
                 // List out available versions for a package
                 var foundPackages = Utilities.UpmSearch(context.ProjectPackageInfo.name);
                 
-                ActivityLogger.Log($"Search of {context.ProjectPackageInfo.name} finished. Upm found {foundPackages.Length} matches");
-
+                ActivityLogger.Log($"Search of {context.ProjectPackageInfo.name} finished. Upm found {foundPackages?.Length} matches");
+            
                 // If it exists, get the last one from that list.
                 if (foundPackages != null && foundPackages.Length > 0)
                 {
@@ -143,7 +142,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                         context.PreviousPackageInfo = GetManifest(previousPackagePath);
                         context.DownloadAssembliesForPreviousVersion();
                     }
-
+            
                     // Fill the versions for later use
                     context.AllVersions = foundPackages[0].versions.all;
                 }

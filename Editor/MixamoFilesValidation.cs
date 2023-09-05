@@ -108,7 +108,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             foreach (var guid in guids)
             {
                 var objectPath = AssetDatabase.GUIDToAssetPath(guid);
-                var assetsAtPath = AssetDatabase.LoadAllAssetsAtPath(objectPath);
+                var assetsAtPath =  AssetDatabase.LoadAllAssetRepresentationsAtPath(objectPath);
+
                 foreach (var assetObject in assetsAtPath)
                 {
                     if (!(assetObject is GameObject gameObject) || !gameObject.name.StartsWith(k_mixamoRig)) continue;

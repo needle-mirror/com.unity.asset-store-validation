@@ -81,7 +81,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     throw new Exception("Failed to fetch package information: network not reachable");
                 Thread.Sleep(100);
             }
-            if (throwOnRequestFailure && request.Status == StatusCode.Failure)
+            if (throwOnRequestFailure && request.Status == StatusCode.Failure && request.Error.errorCode != ErrorCode.NotFound)
                 throw new Exception("Failed to fetch package information.  Error details: " + request.Error.errorCode + " " + request.Error.message);
             Profiler.EndSample();
             return request.Result;

@@ -1,25 +1,25 @@
 {
   "name": "com.unity.asset-store-validation",
   "displayName": "Asset Store Validation",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "unity": "2021.3",
   "description": "Asset Store Validation Suite is a validation package designed to validate that UPM packages meet all necessary requirements to be uploaded to the Asset Store.",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "2.0.2"
   },
   "relatedPackages": {
-    "com.unity.asset-store-validation.tests": "0.2.0"
+    "com.unity.asset-store-validation.tests": "0.2.1"
   },
   "_upm": {
-    "changelog": "### Added\n\n- Asset store publish validations\n- Customizable timeout for checking if URLs are reachable\n- Mandatory `unity` and `unityRelease` fields validation\n- Short-circuit mechanism to avoid using npm when it has been flagged as \"unusable\"\n- Warning result for validations that contain warnings\n\n### Changed\n\n- Clarified samples validation error message\n- Clarified validation names\n- Manifest display name validation to adhere to Asset Store guidelines\n- Validation results now appear alphabetically\n\n### Removed\n\n- Package dependencies validation\n\n### Fixed\n\n- Unhandled exception when using npm to validate packages on production\n- ValidationSuiteReport.GetReport returning null for existing JSON reports"
+    "changelog": "### Fixed\n\n- Mechanism used to detect if the user is currently logged in\n- Validation report not showing when the package has not been published before\n- Error in console when running validation on 2021 on a package with empty scene"
   },
   "upmCi": {
-    "footprint": "7202587e9e62b0c240ccf460b93543b543ce437c"
+    "footprint": "6e326f962518ad8de2300b4b344b61c983e1aa03"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.asset-store-validation@0.2/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.asset-store-validation.git",
     "type": "git",
-    "revision": "5ec066cecd8369c55a168da1fca23b4bc623bb28"
+    "revision": "01809bc656d23c5070ac841a318a5318e28f2eea"
   }
 }
