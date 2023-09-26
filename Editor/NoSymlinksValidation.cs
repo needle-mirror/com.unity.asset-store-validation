@@ -16,7 +16,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "No Symlinks";
             TestDescription = "A package must not contain any symbolic links or shortcuts to other files.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] {ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.AssetStore, ValidationType.InternalTesting};
         }
 
         protected override void Run()

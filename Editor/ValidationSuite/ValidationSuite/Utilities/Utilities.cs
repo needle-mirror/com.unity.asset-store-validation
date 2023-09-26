@@ -2,6 +2,7 @@ using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading;
 using UnityEngine;
@@ -9,6 +10,7 @@ using UnityEngine.Profiling;
 using UnityEngine.Assertions;
 using UnityEditor.Compilation;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
+using UnityEngine.Networking;
 using Assembly = UnityEditor.Compilation.Assembly;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
@@ -58,19 +60,6 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             }
         }
 
-        internal static string CreatePackage(string path, string workingDirectory)
-        {
-            //No Need to delete the file, npm pack always overwrite: https://docs.npmjs.com/cli/pack
-            var packagePath = Path.Combine(Path.Combine(Application.dataPath, ".."), path);
-
-            var launcher = new NodeLauncher();
-            launcher.WorkingDirectory = workingDirectory;
-            launcher.NpmPack(packagePath);
-
-            var packageName = launcher.OutputLog.ToString().Trim();
-            return packageName;
-        }
-
         internal static PackageInfo[] UpmSearch(string packageIdOrName = null, bool throwOnRequestFailure = false)
         {
             Profiler.BeginSample("UpmSearch");
@@ -112,48 +101,51 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             return result.ToArray();
         }
 
-        internal static string DownloadPackage(string packageId, string workingDirectory)
+        internal static bool PackageExistsOnProduction(string packageName, string version = null)
         {
-            //No Need to delete the file, npm pack always overwrite: https://docs.npmjs.com/cli/pack
-            var launcher = new NodeLauncher();
-            launcher.WorkingDirectory = workingDirectory;
-            launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
+            var uri = new Uri($"https://download.packages.unity.com/{packageName}");
 
-            try
+            var dataHandler = new DownloadHandlerBuffer();
+            var request = new UnityWebRequest(uri)
             {
-                launcher.NpmPack(packageId);
-            }
-            catch (ApplicationException exception)
+                timeout = 5, // Prevent a forever long request
+                downloadHandler = dataHandler
+            };
+            
+            request.SendWebRequest();
+            
+            while (!request.isDone)
             {
-                exception.Data["code"] = "fetchFailed";
-                throw exception;
+                Thread.Sleep(1);
             }
 
-            var packageName = launcher.OutputLog.ToString().Trim();
-            return packageName;
+            switch (request.responseCode)
+            {
+                // If 404, we know for sure it is not there
+                case (int)HttpStatusCode.NotFound:
+                    return false;
+                case (int)HttpStatusCode.OK:
+                    return version == null || IsVersionInPackageResponse(dataHandler, packageName, version);
+                default:
+                    throw new PackageRequestFailedException(packageName, (HttpStatusCode)request.responseCode);
+            }
         }
 
-        internal static bool PackageExistsOnProduction(string packageId, string version = null)
+        private static bool IsVersionInPackageResponse(DownloadHandlerBuffer request,string packageName, string version)
         {
-            var launcher = new NodeLauncher();
-            launcher.NpmRegistry = NodeLauncher.ProductionRepositoryUrl;
-
             try
             {
-                launcher.NpmView(packageId);
+                var result = (Dictionary<string, object>)SimpleJsonReader.Read(request.text);
+                
+                // fetch only versions
+                result.TryGetValue("versions", out object versionsRaw);
+                var versions = (Dictionary<string, object>)versionsRaw;
+                return versions.ContainsKey(version);
             }
-            catch (ApplicationException exception)
+            catch (Exception)
             {
-                if (exception.Message.Contains("npm ERR! code E404") &&
-                    exception.Message.Contains("is not in the npm registry."))
-                    return false;
-                exception.Data["code"] = "fetchFailed";
-                throw;
+                throw new PackageResponseParseException(packageName);
             }
-
-            var packageData = launcher.OutputLog.ToString().Trim();
-
-            return !string.IsNullOrEmpty(packageData) && (version == null || packageData.Contains(version));
         }
 
         /// <summary>

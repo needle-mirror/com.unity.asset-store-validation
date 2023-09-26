@@ -76,7 +76,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Samples";
             TestDescription = "Verify that samples meet expectations, if the package has samples.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };
+            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
         }
 
         protected override void Run()

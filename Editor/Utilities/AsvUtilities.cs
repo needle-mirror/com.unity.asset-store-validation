@@ -57,27 +57,5 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             if (string.IsNullOrWhiteSpace(url)) return UrlStatus.None;
             return m_HttpUtils.IsURLReachable(url) ? UrlStatus.Ok : UrlStatus.Unreachable;
         }
-
-        // IMPORTANT: Only use this function if the field does not already exist in PVS Manifest data.
-        // Once ASVS is detached from PVS, this function should be removed.
-        public static string GetManifestField(string packagePath, string field)
-        {
-            // Start by parsing the package's manifest data.
-            var manifestPath = Path.Combine(packagePath, k_PackageJsonFilename);
-
-            if (!File.Exists(manifestPath))
-                throw new FileNotFoundException(manifestPath);
-            
-            try
-            {
-                var textManifestData = File.ReadAllText(manifestPath);
-                var packageParsedMetaData = JObject.Parse(textManifestData);
-                return packageParsedMetaData?.Value<string>(field) ?? "";
-            }
-            catch (ArgumentException e)
-            {
-                throw new Exception($"Could not parse json in file {manifestPath} because of: {e}");
-            }
-        }
     }
 }

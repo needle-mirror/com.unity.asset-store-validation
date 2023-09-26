@@ -13,15 +13,13 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         VerifiedSet,
         /// <summary>Validation for continuous integration.</summary>
         CI,
-        /// <summary>Validation for package publishing.</summary>
-        Publishing,
         /// <summary>Validation for package promotion.</summary>
         Promotion,
         /// <summary>Validation for the asset store.</summary>
         AssetStore,
         /// <summary>Validation to meet the condition to publish to the asset store.</summary>
         AssetStorePublishAction,
-        /// <summary>Running just tests marked for InternalTesting</summary>
+        /// <summary>Running just tests marked for InternalTesting. This tests should not make network calls</summary>
         InternalTesting,
         /// <summary>Validation for the structure of the package</summary>
         Structure

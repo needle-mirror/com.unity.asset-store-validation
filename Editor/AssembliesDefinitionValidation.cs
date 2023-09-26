@@ -31,9 +31,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         public AssembliesDefinitionValidation()
         {
             TestName = "Assemblies Definition";
-            TestDescription = "Validates that the package assemblies definition have asociated scripts and that scripts are associated to assemblies.";
+            TestDescription = "Validates that the package assemblies definition have associated scripts and that scripts are associated to assemblies.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };
+            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
 
         }
 

@@ -19,7 +19,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "No Compressed Audio Files";
             TestDescription = "A package must not contain any lossy compressed audio files.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] {ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.AssetStore, ValidationType.InternalTesting};
         }
 
         protected override void Run()

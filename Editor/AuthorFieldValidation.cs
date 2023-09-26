@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Editor.ValidationSuite.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    class AuthorFieldValidation : BaseValidation
+    class AuthorFieldValidation : BaseHttpValidation
     {
         internal const int k_AuthorNameMaxLengthLimit = 512;
         internal const int k_EmailMaxLengthLimit = 320;
@@ -55,19 +56,20 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         internal static readonly string k_AuthorUrlFieldIsUnreachableWarningMessage = $"Unreachable `URL`. The `URL` field in the author field of your package.json is unreachable." +
                                                                                   $" {ErrorDocumentation.GetLinkMessage(s_DocsFilePath, "url-is-unreachable")}";
-        
-        internal IReachable HttpUtils { get; set; }
+        internal static string AuthorUrlFieldNotTestedMessage(string url) => $"Untested `URL`. The URL \"{url}\" provided in the `URL` property in the author field of the package.json has not been tested. Please manually validate that the url is reachable" +
+                                                                             $" {ErrorDocumentation.GetLinkMessage(s_DocsFilePath, "url-not-tested")}";
 
         public AuthorFieldValidation()
         {
-            TestName = "Manifest: Author Name Field";
-            TestDescription = "Validates that the package author name field is valid.";
+            TestName = "Manifest: Author Field";
+            TestDescription = "Validates that the package author field is valid.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new ValidationType[] { ValidationType.Structure, ValidationType.AssetStore };
+            SupportedValidations = new ValidationType[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
         }
 
         protected override void Run()
         {
+            base.Run();
             // Start by declaring victory
             TestState = TestState.Succeeded;
             Validate(Context.ProjectPackageInfo);
@@ -138,9 +140,17 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             if (!IsValidUrl(url))
                 AddError(k_AuthorUrlFieldInvalidFormatErrorMessage);
 
-            //warning in case of valid but unreachable URL
-            if (!IsURLReachable(url))
-                AddWarning(k_AuthorUrlFieldIsUnreachableWarningMessage);
+            // For internal testing there should not be any network calls
+            if (Context.ValidationType == ValidationType.InternalTesting)
+            {
+                AddWarning(AuthorUrlFieldNotTestedMessage(url));
+            }
+            else
+            {
+                //warning in case of valid but unreachable URL, 
+                if (CheckUrlStatus(url) == UrlStatus.Unreachable)
+                    AddWarning(k_AuthorUrlFieldIsUnreachableWarningMessage);
+            }
         }
 
         bool IsUnityAuthorNames(string authorName) => !string.IsNullOrWhiteSpace(authorName) && m_AuthorNameRegexCheck.IsMatch(authorName);
@@ -156,18 +166,5 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         bool IsValidEmail(string email) => m_EmailRegexCheck.IsMatch(email);
 
         bool IsValidUrl(string url) => !string.IsNullOrWhiteSpace(url) && m_UrlRegexCheck.IsMatch(url);
-
-        /// <summary>
-        /// This method return True if the provided URL is reachable, false otherwise.
-        /// Using a head request for a faster check
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public virtual bool IsURLReachable(string url)
-        {
-            if (HttpUtils == null)
-                HttpUtils = new HttpUtils();
-            return HttpUtils.IsURLReachable(url, k_UrlCheckTimeoutSeconds);
-        }       
     }
 }

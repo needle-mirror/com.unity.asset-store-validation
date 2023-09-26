@@ -14,6 +14,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         public string unityRelease = "";
         public string version = "";
         public string type = "";
+        public string changelogUrl = "";
         [AlternativeSerializationFormat(nameof(authorDetails))]
         public string author;
         [NonSerialized]

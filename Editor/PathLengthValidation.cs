@@ -21,7 +21,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Path Length";
             TestDescription = $"Ensure that any file and folder paths should not exceed {k_MaxPathLength} characters.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] {ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.AssetStore, ValidationType.InternalTesting};
         }
 
         protected override void Run()

@@ -73,7 +73,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             context.ProjectPackageInfo = GetManifest(packageInfo.resolvedPath);
             context.PackageType = context.ProjectPackageInfo.PackageType;
 
-            if (context.ValidationType != ValidationType.VerifiedSet)
+            if (context.ValidationType != ValidationType.VerifiedSet && context.ValidationType != ValidationType.InternalTesting)
             {
                 try
                 {
@@ -83,7 +83,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                         $"Package {packageInfo.name} {(context.PackageExistsOnProduction ? "is" : "is not")} in the Unity registry");
                     ActivityLogger.Log($"Checking if package {packageInfo.packageId} exists in the Unity registry");
                     context.PackageVersionExistsOnProduction =
-                        Utilities.PackageExistsOnProduction(packageInfo.packageId, packageInfo.version);
+                        Utilities.PackageExistsOnProduction(packageInfo.name, packageInfo.version);
                     ActivityLogger.Log(
                         $"Package {packageInfo.packageId} {(context.PackageExistsOnProduction ? "is" : "is not")} in the Unity registry");
                 }
@@ -122,8 +122,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             }
             Profiler.EndSample();
 
-            // No need to compare against the previous version of the package if we're testing out the verified set.
-            if (context.ValidationType != ValidationType.VerifiedSet)
+            // No need to compare against the previous version of the package if we're testing out the verified set, or if we don't want to make network calls 
+            if (context.ValidationType != ValidationType.VerifiedSet && context.ValidationType != ValidationType.InternalTesting)
             {
                 ActivityLogger.Log("Looking for previous package version");
             
@@ -286,7 +286,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             {
                 try
                 {
-                    if (Utilities.PackageExistsOnProduction(packageInfo.name + "@" + prevVersion))
+                    if (Utilities.PackageExistsOnProduction(packageInfo.name, prevVersion))
                     {
                         previousVersion = prevVersion;
                         break;
@@ -304,11 +304,27 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                 try
                 {
                     ActivityLogger.Log("Retrieving previous package version {0}", previousVersion);
+
+                    // Request information
+                    var previousPackageTarballName = $"{projectPackageInfo.name}-{previousVersion}.tgz";
+                    var uri = Path.Combine($"https://download.packages.unity.com/{projectPackageInfo.name}/-/{previousPackageTarballName}");
+                    
+                    // Set the destination information
                     var previousPackageId = ManifestData.GetPackageId(projectPackageInfo.name, previousVersion);
                     var tempPath = Path.GetTempPath();
                     var previousPackagePath = Path.Combine(tempPath, "previous-" + previousPackageId);
-                    var packageFileName = Utilities.DownloadPackage(previousPackageId, tempPath);
-                    Utilities.ExtractPackage(Path.Combine(tempPath, packageFileName), tempPath, previousPackagePath, projectPackageInfo.name);
+                    
+                    var packageDataZipFilename = PackageBinaryZipping.PackageDataZipFilename(projectPackageInfo.name, previousVersion);
+                    var zipPath = Path.Combine(PreviousVersionBinaryPath, packageDataZipFilename);
+                    
+                    var request = new UnityWebRequest(uri);
+                    request.timeout = 60; // 60 seconds time out
+                    request.downloadHandler = new DownloadHandlerFile(zipPath);
+                    var operation = request.SendWebRequest();
+                    while (!operation.isDone)
+                        Thread.Sleep(1);
+                    
+                    Utilities.ExtractPackage(Path.Combine(tempPath, zipPath), tempPath, previousPackagePath, projectPackageInfo.name);
                     return previousPackagePath;
                 }
                 catch (Exception exception)

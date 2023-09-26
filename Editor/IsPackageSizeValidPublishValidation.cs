@@ -21,7 +21,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Package Size";
             TestDescription = $"Verify that the package size is below {k_PackageSizeLimitMb}mb.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.AssetStorePublishAction };
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.AssetStorePublishAction, ValidationType.InternalTesting };
             m_AssetStorePublishOperationValidationUtility = new AssetStorePublishOperationValidationUtility();
         }
 

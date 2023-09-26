@@ -31,7 +31,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "No Jpgs";
             TestDescription = "A package must not contain any jpgs outside of the Documentation~ and Tests folders.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] {ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.AssetStore, ValidationType.InternalTesting};
         }
 
         protected override void Run()

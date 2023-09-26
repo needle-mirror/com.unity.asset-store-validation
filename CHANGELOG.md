@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2023-09-26
+
+### Added
+
+- Grouped validations that do not require network calls under `InternalTesting` ValidationType
+
+### Changed
+
+- Author Field, Changelog and Documentation validations to display a warning when using the `InternalTesting` ValidationType, if a url is present in the corresponding field
+
+### Removed
+
+- Use of `npm` and `node`
+
 ## [0.2.1] - 2023-09-05
 
 ### Fixed

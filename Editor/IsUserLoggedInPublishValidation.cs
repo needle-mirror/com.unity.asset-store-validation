@@ -17,7 +17,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "User logged in";
             TestDescription = "Verify that the user is logged in.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.AssetStorePublishAction };
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.AssetStorePublishAction, ValidationType.InternalTesting };
             m_AssetStorePublishOperationValidationUtility = new AssetStorePublishOperationValidationUtility();
         }
 

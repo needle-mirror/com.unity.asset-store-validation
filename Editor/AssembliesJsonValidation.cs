@@ -17,7 +17,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Assemblies Json";
             TestDescription = "Validate that the assembly files are valid json.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting};
 
         }
 

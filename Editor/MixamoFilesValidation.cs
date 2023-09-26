@@ -33,7 +33,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Mixamo Files";
             TestDescription = "Validate if the package contains mixamo files.";
             TestCategory = TestCategory.ContentScan;
-            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting};
         }
 
         protected override void Run()

@@ -2,13 +2,13 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Editor.ValidationSuite.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.Models;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite;
-using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    class DocumentationValidation : BaseValidation
+    class DocumentationValidation : BaseHttpValidation
     {
         static readonly string k_DocsFilePath = "documentation_validation.html";
         const string k_DocumentationFolderName = "Documentation~";
@@ -31,6 +31,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         internal static string UnreachableUrlMessage(string url) =>
             $"The url \"{url}\", provided in the \"documentationUrl\" field in package.json, is not reachable. To avoid broken links, please validate that the URL is correct. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "documentationUrl-not-reachable")}";
+        
+        internal static string UntestedUrlMessage(string url) =>
+            $"The url \"{url}\", provided in the \"documentationUrl\" field in package.json, has not been tested. Please validate manually that the URL is accurate and reachable. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "documentationUrl-not-tested")}";
 
         static readonly string[] k_AllowedExtensions = new string[]
         {
@@ -43,30 +46,38 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         Regex m_DocumentationFolderRegex = new Regex(k_DocumentationFolderName, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-        internal IReachable m_HttpUtils;
-
         public DocumentationValidation()
         {
             TestName = "Documentation";
             TestDescription = "A package must contain basic usage documentation for consumers.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };
-
-            m_HttpUtils = new HttpUtils();
+            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
         }
 
         protected override void Run()
         {
+            base.Run();
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
             var manifestData = Context.ProjectPackageInfo;
             var docsUrl = manifestData.documentationUrl;
             
-            var docsUrlStatus = AsvUtilities.CheckUrlStatus(docsUrl, m_HttpUtils);
-            if (docsUrlStatus == UrlStatus.Unreachable)
-                AddWarning(UnreachableUrlMessage(docsUrl));
+            var docsUrlStatus = UrlStatus.None;
             
+            // For internal testing there should not be any network calls
+            if (Context.ValidationType == ValidationType.InternalTesting)
+            {
+                if (!string.IsNullOrWhiteSpace(docsUrl)) // Only write a warning if there's a url to check
+                    AddWarning(UntestedUrlMessage(docsUrl));
+            }
+            else
+            {
+                docsUrlStatus = CheckUrlStatus(docsUrl);
+                if (docsUrlStatus == UrlStatus.Unreachable)
+                    AddWarning(UnreachableUrlMessage(docsUrl));
+            }
+
             var offlineDocsResult = ValidateOfflineDocs();
             
             // Shortcut out when things are ok

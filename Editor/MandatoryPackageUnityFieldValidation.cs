@@ -44,7 +44,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Manifest: Mandatory Unity and UnityRelease Fields";
             TestDescription = "A package must have a valid Unity and UnityRelease fields to correctly notify compatibility with Unity versions.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore };
+            SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
         }
 
         protected override void Run()

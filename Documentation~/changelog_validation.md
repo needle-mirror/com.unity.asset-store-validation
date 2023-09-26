@@ -58,3 +58,6 @@ Changelog entry dates should follow `YYYY-MM-DD`. This warning will be thrown if
 
 ### Unexpected header entry
 An unexpected header appears underneath one or more of the entries in the `CHANGELOG.md` file. The expected headers are as follows (case-sensitive): `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`. While users are allowed to use any headers they want, it is strongly encouraged to use the headers listed above. To remove the warning; simply adhear to the recommended headers.
+
+# Changelog URL not tested
+The "url" field in the "author" field was not tested because the Validation Type used during the validation was `InternalTesting`. To resolve this warning, re-run the validation with a different Validation Type.

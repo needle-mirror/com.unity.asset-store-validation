@@ -4,14 +4,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Editor.ValidationSuite.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite;
-using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.Semver;
 using UnityEditor.PackageManager.AssetStoreValidation.Models;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    class ChangelogValidation : BaseValidation
+    class ChangelogValidation : BaseHttpValidation
     {
         static readonly string k_DocsFilePath = "changelog_validation.html";
         const string k_changelogUrlField = "changelogUrl";
@@ -23,8 +23,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         static string[] k_DateWarningFormats = { "yyyy-MM-d", "yyyy-M-dd", "yyyy-M-d" };
         bool k_PackageVersionFoundInChangelog;
         string k_ChangelogPath;
-
-        internal IReachable m_HttpUtils;
+        
         static readonly List<string> m_Headers = new List<string> { "Added", "Changed", "Deprecated", "Removed", "Fixed", "Security" };
         static readonly string k_ValidHeadersAsString = $"[{string.Join(", ", m_Headers)}]";
 
@@ -45,49 +44,58 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static string InvalidDateError(string entry, string date) => $"Changelog entry '{entry}' contains an invalid date '{date}'. Expecting format '{k_DateFormat}'. Update the date to one of the supported values. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-entry-date-format-is-invalid")}";
         internal static string PackageVersionNotInChangelogError(string version, string path) => $"No changelog entry for version `{version}` was found in '{path}'. Please add or fix a section so you have a `## [{version}] - '{k_DateFormat}'` section. { ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "package-version-is-not-in-changelog")}";
         internal static string CurrentVersionNotFirstEntryInChangelogError(string changelogPath, int foundIndex) => $"Found changelog entry but it was not the first entry in '{changelogPath}' (it was entry #{foundIndex}). Please rearrange your changelog with the most recent section at the top. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "package-version-is-not-first-entry-in-changelog")}";
-        internal static string UnreachableUrlMessage(string url) => $"The url \"{url}\", provided in the \"{k_changelogUrlField}\" field in the package.json, is not reachable. To avoid broken links, please validate that the URL is correct. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-url-not-reachable")}";
+        internal static string UnreachableUrlMessage(string url) => $"The URL \"{url}\", provided in the \"{k_changelogUrlField}\" field in the package.json, is not reachable. To avoid broken links, please validate that the URL is correct. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-url-not-reachable")}";
+        internal static string UrlNotTestedMessage(string url) => $"The URL \"{url}\", provided in the \"{k_changelogUrlField}\" field in the package.json, has not been tested. Please validate manually that the URL is accurate and reachable. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-url-not-tested")}";
 
         public ChangelogValidation()
         {
             TestName = "Changelog";
             TestDescription = "Validates that the package contains a valid CHANGELOG.md or links to a changelog online.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.AssetStore };
-            m_HttpUtils = new HttpUtils();
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.InternalTesting };
         }
 
         protected override void Run()
         {
+            base.Run();
             TestState = TestState.Succeeded;
             var manifestData = Context.ProjectPackageInfo;
             var packagePath = manifestData.path;
 
-            CheckChangelog(packagePath);
+            CheckChangelog(packagePath, manifestData);
         }
 
-        void CheckChangelog(string packagePath)
+        void CheckChangelog(string packagePath, ManifestData manifestData)
         {
-            // TODO Change GetManifestField to use Manifest Data directly once ASVS is separate from PVS
-            var changelogUrl = AsvUtilities.GetManifestField(Context.ProjectPackageInfo.path, k_changelogUrlField);
-            var changelogUrlStatus = AsvUtilities.CheckUrlStatus(changelogUrl, m_HttpUtils);
-
-            if (changelogUrlStatus == UrlStatus.Unreachable)
-                AddWarning(UnreachableUrlMessage(changelogUrl));
-
+            // Check the embedded changelog first to assess if we should show an error later when there's no changelog url
             var offlineChangelogName = TryGetOfflineChangelogName(packagePath);
-            if (!string.IsNullOrWhiteSpace(offlineChangelogName))
-            {
+            var hasOfflineChangelog = !string.IsNullOrWhiteSpace(offlineChangelogName);
+            if (hasOfflineChangelog)
+            {   
                 if (Path.GetExtension(offlineChangelogName) != Path.GetExtension(AsvUtilities.k_ChangelogName))
                     AddError(InvalidExtensionError(offlineChangelogName));
                 else if (offlineChangelogName != (AsvUtilities.k_ChangelogName))
                     AddError(CapitalizationError(offlineChangelogName));
-                
+
                 k_ChangelogPath = Path.Combine(packagePath, offlineChangelogName);
                 ScanChangelog(k_ChangelogPath);
+            }
+            
+            // For internal testing there should not be any network calls
+            if (Context.ValidationType == ValidationType.InternalTesting)
+            {
+                if (!string.IsNullOrWhiteSpace(manifestData.changelogUrl)) // Only write a warning if there's a url to check
+                    AddWarning(UrlNotTestedMessage(manifestData.changelogUrl));
+                
                 return;
             }
+            
+            // Check the changelog url status
+            var changelogUrlStatus = CheckUrlStatus(manifestData.changelogUrl);
 
-            if (changelogUrlStatus == UrlStatus.None)
+            if (changelogUrlStatus == UrlStatus.Unreachable)
+                AddWarning(UnreachableUrlMessage(manifestData.changelogUrl));
+            else if (changelogUrlStatus == UrlStatus.None && !hasOfflineChangelog)
                 AddError(NoChangelogError(Path.Combine(packagePath, AsvUtilities.k_ChangelogName)));
         }
 
@@ -105,13 +113,17 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             ChangelogEntry changelogEntry = null;
             var lineNum = 0;
             var numEntries = 0;
+            
             try
             {
                 using (var streamReader = new StreamReader(changelogPath))
                 {
-                    string line;
-                    while ((line = streamReader.ReadLine()) != null)
+                    string rawLine;
+                    while ((rawLine = streamReader.ReadLine()) != null)
                     {
+                        // Cleanup the whole line to avoid having extra whitespaces when matching regex.
+                        // Without this, test: When_Headers_Are_Empty_Or_WhiteSpace_Fail was failing because it detected '###          ' as a valid header 
+                        var line = rawLine.Trim();
                         lineNum++;
 
                         // Avoid doing unnecessary work on lines that aren't entries or headers
@@ -119,10 +131,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
                             continue;
 
                         if (IsEmptyHeaderOrEntry(line))
-                        {
                             AddError(EmptyHeaderOrEntryError(lineNum));
-                            return;
-                        }
 
                         var entry = Regex.Match(line, k_EntryLineRegex);
                         if (entry.Success)

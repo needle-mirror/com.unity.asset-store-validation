@@ -37,3 +37,6 @@ The "URL" field in the author field of a package definition must abide by the re
 # Warnings
 ### Url is unreachable
 It is recommended that the "URL" field in a package definition be reachable. To resolve this warning make sure that the "URL" field in your package.json file is reachable, then run the validation again.
+
+### Url not tested
+The "url" field in the "author" field was not tested because the Validation Type used during the validation was `InternalTesting`. To resolve this warning, re-run the validation with a different Validation Type. 

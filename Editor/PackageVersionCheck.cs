@@ -14,7 +14,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Package Version";
             TestDescription = "A package version must be a valid Semver string.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting};
 
         }
 

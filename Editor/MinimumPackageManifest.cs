@@ -12,7 +12,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Minimum Package Manifest";
             TestDescription = "A package manifest must contain at least the following fields: name, version.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore};
+            SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore,ValidationType.InternalTesting};
         }
 
         protected override void Run()

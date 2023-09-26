@@ -39,7 +39,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestName = "Manifest: Display Name Field";
             TestDescription = "Validates that the package manifest display name field meets Asset Store submission guidelines.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new[] { ValidationType.AssetStore };
+            SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.InternalTesting };
         }
 
         protected override void Run()

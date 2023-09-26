@@ -37,3 +37,6 @@ At least one file within the `Documentation~` must work as the entry point for y
 ### Documentation Url Not Reachable
 The URL specified in the `documentationUrl` field in your `package.json` is unreachable. Validate that the URL is accurate, 
 that the website can be reached, or that you are not experiencing networking problems at the time of running the validation. 
+
+### Documentation Url Not Tested
+The "url" field in the "documentationUrl" field was not tested because the Validation Type used during the validation was `InternalTesting`. To resolve this warning, re-run the validation with a different Validation Type.
