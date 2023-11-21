@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2023-11-21
+
+### Fixed
+- Fix false negative validation result when checking asmdef|asmref in nested folders with same parent folder name in AssembliesDefinitionValidation
+- Fix files inside hidden folders taken into account in AssembliesDefinitionValidation
+- Unity and UnityRelease version comparison
+- Missing warning messages in the text report
+
+### Changed
+
+- All http calls are done from the same class now
+
 ## [0.3.0] - 2023-09-26
 
 ### Added

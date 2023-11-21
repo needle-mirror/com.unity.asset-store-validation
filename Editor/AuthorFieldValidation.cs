@@ -1,18 +1,16 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Editor.ValidationSuite.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    class AuthorFieldValidation : BaseHttpValidation
+    class AuthorFieldValidation : BaseValidation
     {
         internal const int k_AuthorNameMaxLengthLimit = 512;
         internal const int k_EmailMaxLengthLimit = 320;
         internal const int k_UrlMaxLengthLimit = 2048;
-        const int k_UrlCheckTimeoutSeconds = 4;
 
         static readonly string s_DocsFilePath = "author_field_validation.html";
 
@@ -59,17 +57,18 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static string AuthorUrlFieldNotTestedMessage(string url) => $"Untested `URL`. The URL \"{url}\" provided in the `URL` property in the author field of the package.json has not been tested. Please manually validate that the url is reachable" +
                                                                              $" {ErrorDocumentation.GetLinkMessage(s_DocsFilePath, "url-not-tested")}";
 
-        public AuthorFieldValidation()
+        private IUnityWebRequestHandler m_UnityWebRequestHandler;
+        public AuthorFieldValidation(IUnityWebRequestHandler unityWebRequestHandler)
         {
             TestName = "Manifest: Author Field";
             TestDescription = "Validates that the package author field is valid.";
             TestCategory = TestCategory.DataValidation;
-            SupportedValidations = new ValidationType[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
+            SupportedValidations = new [] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
+            m_UnityWebRequestHandler = unityWebRequestHandler;
         }
 
         protected override void Run()
         {
-            base.Run();
             // Start by declaring victory
             TestState = TestState.Succeeded;
             Validate(Context.ProjectPackageInfo);
@@ -148,7 +147,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             else
             {
                 //warning in case of valid but unreachable URL, 
-                if (CheckUrlStatus(url) == UrlStatus.Unreachable)
+                if (m_UnityWebRequestHandler.IsUrlReachable(url) != UrlStatus.Ok)
                     AddWarning(k_AuthorUrlFieldIsUnreachableWarningMessage);
             }
         }

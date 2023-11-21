@@ -13,7 +13,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static string InvalidUnityFieldErrorMessage(string path, string unityVersion) => $"In {path}, \"unity\" is invalid. It should only be <MAJOR>.<MINOR> (e.g. 2018.4)." +
             $" Current unity = {unityVersion}. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "package-unity-field-mandatory")}";
 
-        internal static string UnityFieldMinimunVersionErrorMessage(string version) => $"The \"unity\" field value {version} must be greater" +
+        internal static string UnityFieldMinimumVersionErrorMessage(string version) => $"The \"unity\" field value {version} must be greater" +
             $" than {k_MinimumMajorUnityVersion}.{k_MinimumMinorUnityVersion}. Please update the \"unity\" field with a value greater than {k_MinimumMajorUnityVersion}.{k_MinimumMinorUnityVersion}," +
             $" then run the validation again. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "package-unity-field-min-version")}";
 
@@ -22,9 +22,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static string InvalidUnityReleaseFieldErrorMessage(string path, string unityRelease) => $"In {path}, the \"unityRelease\" field is invalid. It should only be <number>.<a|b|f>.<number> (e.g. 26.f.1)." +
             $"Current unityRelease = {unityRelease}. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "package-unityRelease-field-mandatory")}";
 
-        internal static string UnityReleaseFieldMinimunVersionErrorMessage(string unity, string unityRelease) =>
+        internal static string UnityReleaseFieldMinimumVersionErrorMessage(string unity, string unityRelease) =>
             $"The combination of the \"unity\" and \"unityRelease\" fields must be greater" +
-            $" than {k_MinimunVersion}. Currently, they are {unity}.{unityRelease}. Please update the \"unityRelease\" field with a value greater than {k_MinimunVersion}," +
+            $" than {k_MinimumVersion}. Currently, they are {unity}.{unityRelease}. Please update the \"unityRelease\" field with a value greater than {k_MinimumVersion}," +
             $" then run the validation again. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "package-unityRelease-field-min-version")}";
 
         internal const int k_MinimumMajorUnityVersion = 2021;
@@ -34,7 +34,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal const char k_MinimumUnityReleaseLetterVersion = 'f';
         internal const int k_MinimumUnityReleaseSecondNumberVersion = 1;
 
-        internal static readonly string k_MinimunVersion = $"{k_MinimumMajorUnityVersion}.{k_MinimumMinorUnityVersion}.{k_MinimumUnityReleaseFirstNumberVersion}{k_MinimumUnityReleaseLetterVersion}{k_MinimumUnityReleaseSecondNumberVersion}";
+        internal static readonly string k_MinimumVersion = $"{k_MinimumMajorUnityVersion}.{k_MinimumMinorUnityVersion}.{k_MinimumUnityReleaseFirstNumberVersion}{k_MinimumUnityReleaseLetterVersion}{k_MinimumUnityReleaseSecondNumberVersion}";
 
         Regex m_UnityFieldRegex = new Regex(@"^([0-9]{4})\.([0-9]+)$");
         Regex m_UnityReleaseFieldRegex = new Regex(@"^([0-9]+)([a|b|f]{1})([0-9]+)$");
@@ -52,50 +52,49 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestState = TestState.Succeeded;
 
             var manifestData = Context.ProjectPackageInfo;
+            
+            ValidateUnityField(manifestData);
+            ValidateUnityReleaseField(manifestData);
+            
+            if(TestState == TestState.Succeeded)
+                VerifyVersionIsHigherThanMinimumVersion(manifestData);
+        }
 
+        private void ValidateUnityField(ManifestData manifestData)
+        {
             var hasUnity = !string.IsNullOrWhiteSpace(manifestData.unity);
-            var hasUnityRelease = !string.IsNullOrWhiteSpace(manifestData.unityRelease);
-
+            
             if (!hasUnity)
-            {
                 AddError(UnityFieldIsMandatoryErrorMessage(manifestData.path));
-            }
             else if (!IsUnityFieldValid(manifestData.unity))
-            {
                 AddError(InvalidUnityFieldErrorMessage(manifestData.path, manifestData.unity));
-            }
-            else
-            {
-                var matchVersion = m_UnityFieldRegex.Match(manifestData.unity);
+        }
+        
+        private void ValidateUnityReleaseField(ManifestData manifestData)
+        {
+            var hasUnityRelease = !string.IsNullOrWhiteSpace(manifestData.unityRelease);
+            
+            if (!hasUnityRelease)
+                AddError(UnityReleaseFieldIsMandatoryErrorMessage(manifestData.path));
+            else if (!IsUnityReleaseValid(manifestData.unityRelease))
+                AddError(InvalidUnityReleaseFieldErrorMessage(manifestData.path, manifestData.unity));
+        }
 
-                var majorVersion = int.Parse(matchVersion.Groups[1].Value);
-                var minorVersion = int.Parse(matchVersion.Groups[2].Value);
-                if (IsUnityFieldLowerThanMinimunVersion(majorVersion, minorVersion))
-                {
-                    AddError(UnityFieldMinimunVersionErrorMessage($"{majorVersion}.{minorVersion}"));
-                }
-                else if (!hasUnityRelease)
-                {
-                    AddError(UnityReleaseFieldIsMandatoryErrorMessage(manifestData.path));
-                }
-                else if (!IsUnityReleaseValid(manifestData.unityRelease))
-                {
-                    AddError(InvalidUnityReleaseFieldErrorMessage(manifestData.path, manifestData.unity));
-                }
-                else
-                {
-                    var matchPatch = m_UnityReleaseFieldRegex.Match(manifestData.unityRelease);
+        private void VerifyVersionIsHigherThanMinimumVersion(ManifestData manifestData)
+        {
+            var matchVersion = m_UnityFieldRegex.Match(manifestData.unity);
+            var majorVersion = int.Parse(matchVersion.Groups[1].Value);
+            var minorVersion = int.Parse(matchVersion.Groups[2].Value);
+                
+            var matchPatch = m_UnityReleaseFieldRegex.Match(manifestData.unityRelease);
+            var releaseFirstNumber = int.Parse(matchPatch.Groups[1].Value);
+            var releaseLetter = matchPatch.Groups[2].Value[0];
+            var releaseSecondNumber = int.Parse(matchPatch.Groups[3].Value);
 
-                    var releaseFirstNumber = int.Parse(matchPatch.Groups[1].Value);
-                    char releaseLetter = matchPatch.Groups[2].Value[0];
-                    var releaseSecondNumber = int.Parse(matchPatch.Groups[3].Value);
-
-                    if (IsUnityReleaseLowerThanMinimunVersion(releaseFirstNumber, releaseLetter, releaseSecondNumber))
-                    {
-                        AddError(UnityReleaseFieldMinimunVersionErrorMessage(manifestData.unity, $"{releaseFirstNumber}{releaseLetter}{releaseSecondNumber}"));
-                    }
-                }
-            }
+            if (IsUnityFieldLowerThanMinimumVersion(majorVersion, minorVersion))
+                AddError(UnityFieldMinimumVersionErrorMessage($"{majorVersion}.{minorVersion}"));
+            else if(IsUnityFieldEqualToMinimumVersion(majorVersion, minorVersion) && IsUnityReleaseLowerThanMinimumVersion(releaseFirstNumber, releaseLetter, releaseSecondNumber))
+                AddError(UnityReleaseFieldMinimumVersionErrorMessage(manifestData.unity, $"{releaseFirstNumber}{releaseLetter}{releaseSecondNumber}"));
         }
 
         private bool IsUnityFieldValid(string unity)
@@ -103,9 +102,14 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             return unity.Length >= 6 && m_UnityFieldRegex.IsMatch(unity);
         }
 
-        private static bool IsUnityFieldLowerThanMinimunVersion(int majorVersion, int minorVersion)
+        private static bool IsUnityFieldLowerThanMinimumVersion(int majorVersion, int minorVersion)
         {
             return k_MinimumMajorUnityVersion > majorVersion || (k_MinimumMajorUnityVersion == majorVersion && k_MinimumMinorUnityVersion > minorVersion);
+        }
+        
+        private static bool IsUnityFieldEqualToMinimumVersion(int majorVersion, int minorVersion)
+        {
+            return k_MinimumMajorUnityVersion == majorVersion && k_MinimumMinorUnityVersion == minorVersion;
         }
 
         private bool IsUnityReleaseValid(string unityRelease)
@@ -113,12 +117,11 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             return m_UnityReleaseFieldRegex.IsMatch(unityRelease);
         }
 
-        private static bool IsUnityReleaseLowerThanMinimunVersion(int releaseFirstNumber, char releaseLetter, int releaseSecondNumber)
+        private static bool IsUnityReleaseLowerThanMinimumVersion(int releaseFirstNumber, char releaseLetter, int releaseSecondNumber)
         {
             return k_MinimumUnityReleaseFirstNumberVersion > releaseFirstNumber
                                     || (k_MinimumUnityReleaseFirstNumberVersion == releaseFirstNumber && releaseLetter.CompareTo(k_MinimumUnityReleaseLetterVersion) < 0)
                                     || (k_MinimumUnityReleaseFirstNumberVersion == releaseFirstNumber && releaseLetter.CompareTo(k_MinimumUnityReleaseLetterVersion) == 0 && k_MinimumUnityReleaseSecondNumberVersion > releaseSecondNumber);
         }
-
     }
 }

@@ -18,7 +18,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestDescription = "A package id (name@version) must not already exist on the Asset Store Registry when trying to publish a new version.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] {ValidationType.AssetStore, ValidationType.AssetStorePublishAction};
-            m_UpmRegistryHelper = new UpmRegistryHelper();
+            m_UpmRegistryHelper = new UpmRegistryHelper(UnityWebRequestHandler.GetInstance());
         }
 
         protected override void Run()

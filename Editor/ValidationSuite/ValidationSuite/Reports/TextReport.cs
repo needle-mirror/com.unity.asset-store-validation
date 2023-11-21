@@ -86,6 +86,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         public void GenerateReport(ValidationSuite suite)
         {
             SaveTestResult(suite, TestState.Failed);
+            SaveTestResult(suite, TestState.Warning);
             SaveTestResult(suite, TestState.Succeeded);
             SaveTestResult(suite, TestState.NotRun);
             SaveTestResult(suite, TestState.NotImplementedYet);

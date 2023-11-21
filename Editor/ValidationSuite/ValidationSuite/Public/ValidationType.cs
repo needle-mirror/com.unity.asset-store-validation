@@ -19,9 +19,12 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         AssetStore,
         /// <summary>Validation to meet the condition to publish to the asset store.</summary>
         AssetStorePublishAction,
+        Publishing,
         /// <summary>Running just tests marked for InternalTesting. This tests should not make network calls</summary>
         InternalTesting,
         /// <summary>Validation for the structure of the package</summary>
-        Structure
+        Structure,
+        /// <summary>Used for no specific validation type</summary>
+        Default
     }
 }

@@ -4,14 +4,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Editor.ValidationSuite.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite;
 using UnityEditor.PackageManager.AssetStoreValidation.Semver;
 using UnityEditor.PackageManager.AssetStoreValidation.Models;
+using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    class ChangelogValidation : BaseHttpValidation
+    class ChangelogValidation : BaseValidation
     {
         static readonly string k_DocsFilePath = "changelog_validation.html";
         const string k_changelogUrlField = "changelogUrl";
@@ -31,6 +31,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static readonly string k_NoValidEntriesFoundError = $"No valid changelog entries were found. The changelog needs to follow the https://keepachangelog.org specifications (`{k_ValidEntryExample}`)";
         internal static readonly string k_ChangelogContainsUnreleasedEntryError = $"Unreleased sections are not permitted in Asset Store package changelogs. Please remove this section or update it with a new version. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-contains-unreleased-entry")}";
 
+        private IUnityWebRequestHandler m_UnityWebRequestHandler;
+
         internal static string NoChangelogError(string changelogPath) => $"Cannot find changelogUrl property in package.json or a {AsvUtilities.k_ChangelogName} at '{changelogPath}'. Please create a '{AsvUtilities.k_ChangelogName}' file and '{AsvUtilities.k_ChangelogName}.meta' or provide a link to an online changelog 'changelogUrl' in package.json. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "no-changelog-found")}";
         internal static string CapitalizationError(string actualChangelogFilename) => $"The changelog file needs to be properly capitalized. Please rename {actualChangelogFilename} to {AsvUtilities.k_ChangelogName}. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-invalid-capitalization")}";
         internal static string InvalidExtensionError(string actualChangelogFilename) => $"The changelog file {actualChangelogFilename} must be named {AsvUtilities.k_ChangelogName} with the proper file extension. To resolve this error, ensure the changelog file is named {AsvUtilities.k_ChangelogName}, then run the validation again. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "invalid-or-missing-file-extension")}";
@@ -47,17 +49,17 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         internal static string UnreachableUrlMessage(string url) => $"The URL \"{url}\", provided in the \"{k_changelogUrlField}\" field in the package.json, is not reachable. To avoid broken links, please validate that the URL is correct. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-url-not-reachable")}";
         internal static string UrlNotTestedMessage(string url) => $"The URL \"{url}\", provided in the \"{k_changelogUrlField}\" field in the package.json, has not been tested. Please validate manually that the URL is accurate and reachable. {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "changelog-url-not-tested")}";
 
-        public ChangelogValidation()
+        public ChangelogValidation(IUnityWebRequestHandler unityWebRequestHandler)
         {
             TestName = "Changelog";
             TestDescription = "Validates that the package contains a valid CHANGELOG.md or links to a changelog online.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] { ValidationType.AssetStore, ValidationType.InternalTesting };
+            m_UnityWebRequestHandler = unityWebRequestHandler;
         }
 
         protected override void Run()
         {
-            base.Run();
             TestState = TestState.Succeeded;
             var manifestData = Context.ProjectPackageInfo;
             var packagePath = manifestData.path;
@@ -91,7 +93,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             }
             
             // Check the changelog url status
-            var changelogUrlStatus = CheckUrlStatus(manifestData.changelogUrl);
+            var changelogUrlStatus = m_UnityWebRequestHandler.IsUrlReachable(manifestData.changelogUrl);
 
             if (changelogUrlStatus == UrlStatus.Unreachable)
                 AddWarning(UnreachableUrlMessage(manifestData.changelogUrl));
@@ -105,7 +107,6 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             var changelogFileName = Path.GetFileName(Directory.GetFiles(path, "*.*").FirstOrDefault(x => changelogReg.IsMatch(x) || string.Equals(Path.GetFileName(x), "CHANGELOG", StringComparison.OrdinalIgnoreCase)));
 
             return changelogFileName;
-            
         }
 
         void ScanChangelog(string changelogPath)

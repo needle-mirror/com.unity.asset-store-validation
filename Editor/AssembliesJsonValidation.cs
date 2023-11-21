@@ -9,7 +9,6 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 {
     class AssembliesJsonValidation : BaseValidation
     {
-        
         internal static readonly string k_DocsFilePath = "assemblies_json_validation.html";
 
         public AssembliesJsonValidation()
@@ -18,7 +17,6 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestDescription = "Validate that the assembly files are valid json.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] {ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting};
-
         }
 
         protected override void Run()

@@ -1,25 +1,25 @@
 {
   "name": "com.unity.asset-store-validation",
   "displayName": "Asset Store Validation",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "unity": "2021.3",
   "description": "Asset Store Validation Suite is a validation package designed to validate that UPM packages meet all necessary requirements to be uploaded to the Asset Store.",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "2.0.2"
   },
   "relatedPackages": {
-    "com.unity.asset-store-validation.tests": "0.3.0"
+    "com.unity.asset-store-validation.tests": "0.4.0"
   },
   "_upm": {
-    "changelog": "### Added\n\n- Grouped validations that do not require network calls under `InternalTesting` ValidationType\n\n### Changed\n\n- Author Field, Changelog and Documentation validations to display a warning when using the `InternalTesting` ValidationType, if a url is present in the corresponding field\n\n### Removed\n\n- Use of `npm` and `node`"
+    "changelog": "### Fixed\n- Fix false negative validation result when checking asmdef|asmref in nested folders with same parent folder name in AssembliesDefinitionValidation\n- Fix files inside hidden folders taken into account in AssembliesDefinitionValidation\n- Unity and UnityRelease version comparison\n- Missing warning messages in the text report\n\n### Changed\n\n- All http calls are done from the same class now"
   },
   "upmCi": {
-    "footprint": "a25ad4354c74a648698611ef83773e23b679dec7"
+    "footprint": "6d0248b8788fb02ac3f6acb19854cd2b0eb178e8"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.asset-store-validation@0.3/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.asset-store-validation@0.4/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.asset-store-validation.git",
     "type": "git",
-    "revision": "79e05a581eefed2465c9fa5e138275a918112727"
+    "revision": "bae1d8d36ff512a9e52946b0977adc953868c7da"
   }
 }

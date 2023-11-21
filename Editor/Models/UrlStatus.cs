@@ -1,6 +1,6 @@
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    enum UrlStatus
+    internal enum UrlStatus
     {
         None,
         Unreachable,

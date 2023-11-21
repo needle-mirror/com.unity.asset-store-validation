@@ -1,11 +1,9 @@
 using Newtonsoft.Json.Linq;
 using System;
-using System.Net.Http;
-using UnityEditor.Connect;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    static class UnityConnectUtilities
+    internal static class UnityConnectUtilities
     {
         internal static string s_CloudEnvironment;
 
@@ -15,6 +13,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
         internal const string k_AssetStorePublisherID = "https://packages-v2.unity.com/-/api/metadata";
         internal const string k_AssetStoreCheckTerms = "https://packages-v2.unity.com/-/api/terms/check";
+
+        private static IUnityWebRequestHandler m_UnityWebRequestHandler => UnityWebRequestHandler.GetInstance();
 
         static UnityConnectUtilities()
         {
@@ -72,8 +72,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         {
             get
             {
-                var metadataResponseMessage = ValidationHttpClient.Get(k_AssetStorePublisherID, getAccessToken);
-                return IsPublisherIdInMetadata(metadataResponseMessage);
+                var metadataResponseMessage = m_UnityWebRequestHandler.SendGetRequestWithAuth(k_AssetStorePublisherID, getAccessToken);
+                return IsPublisherIdInMetadata(metadataResponseMessage?.downloadHandler?.text);
             }
         }
 
@@ -85,35 +85,26 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         {
             get
             {
-                var checkTermsResponse = ValidationHttpClient.Get(k_AssetStoreCheckTerms, getAccessToken);
-
-                if (checkTermsResponse.StatusCode != System.Net.HttpStatusCode.OK) return null;
-
-                return checkTermsResponse.Content.ReadAsStringAsync().Result.Contains(":true");
+                var checkTermsResponse = m_UnityWebRequestHandler.SendGetRequestWithAuth(k_AssetStoreCheckTerms, getAccessToken);
+                return checkTermsResponse?.downloadHandler?.text.Contains(":true");
             }
         }
 
         internal static string getAccessToken => CloudProjectSettings.accessToken;
 
-        private static bool? IsPublisherIdInMetadata(HttpResponseMessage metadataResponseMessage)
+        private static bool? IsPublisherIdInMetadata(string metadataResponseMessage)
         {
-            string stringMetadata = metadataResponseMessage.Content.ReadAsStringAsync().Result;
             try
             {
-                JObject stringMetadaResponse = JObject.Parse(stringMetadata);
-                JObject publisher = (JObject)stringMetadaResponse["publisher"];
-                string publisherId = publisher["id"].ToString();
+                var stringMetadataResponse = JObject.Parse(metadataResponseMessage);
+                var publisher = (JObject)stringMetadataResponse["publisher"];
+                var publisherId = publisher["id"].ToString();
                 return !string.IsNullOrWhiteSpace(publisherId);
             }
             catch (Exception)
             {
                 return null;
             }
-        }
-
-        private static HttpClientHandler GetHttpClient()
-        {
-            return new HttpClientHandler();
         }
     }
 }

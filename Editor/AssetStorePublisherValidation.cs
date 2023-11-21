@@ -23,7 +23,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             TestDescription = "Validates that the package belongs to the publisher.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new ValidationType[] {ValidationType.AssetStore};
-            m_UpmRegistryHelper = new UpmRegistryHelper();
+            m_UpmRegistryHelper = new UpmRegistryHelper(UnityWebRequestHandler.GetInstance());
         }
 
         protected override void Run()

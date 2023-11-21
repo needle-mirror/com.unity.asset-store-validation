@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using UnityEditor.PackageManager.AssetStoreValidation.Semver;
 using UnityEngine.Networking;
 using UnityEngine.Profiling;
@@ -15,6 +14,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
     /// </summary>
     class VettingContext
     {
+        private const string k_ArtifactoryUrl = "https://artifactory.prd.it.unity3d.com/artifactory/pkg-api-validation/v2/";
         public bool IsCore { get; set; }
 
         public ManifestData ProjectPackageInfo { get; set; }
@@ -37,6 +37,13 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
 #if UNITY_2021_1_OR_NEWER
         public Dictionary<string, PackageInfo> PackageInfoList = new Dictionary<string, PackageInfo>();
 
+        private static IUnityWebRequestHandler m_UnityWebRequestHandler;
+
+        public VettingContext(IUnityWebRequestHandler unityWebRequestHandler)
+        {
+            m_UnityWebRequestHandler = unityWebRequestHandler;
+        }
+
         public PackageInfo GetPackageInfo(string packageName)
         {
             if (PackageInfoList.ContainsKey(packageName))
@@ -50,12 +57,12 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
         }
 
 #endif
-        public static VettingContext CreatePackmanContext(string packageId, ValidationType validationType)
+        public static VettingContext CreatePackmanContext(string packageId, ValidationType validationType, IUnityWebRequestHandler unityWebRequestHandler)
         {
             Profiler.BeginSample("CreatePackmanContext");
             ActivityLogger.Log("Starting Packman Context Creation");
 
-            var context = new VettingContext();
+            var context = new VettingContext(unityWebRequestHandler);
             var packageParts = packageId.Split('@');
             var packageList = Utilities.UpmListOffline();
 
@@ -126,12 +133,12 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             if (context.ValidationType != ValidationType.VerifiedSet && context.ValidationType != ValidationType.InternalTesting)
             {
                 ActivityLogger.Log("Looking for previous package version");
-            
+
                 // List out available versions for a package
                 var foundPackages = Utilities.UpmSearch(context.ProjectPackageInfo.name);
-                
+
                 ActivityLogger.Log($"Search of {context.ProjectPackageInfo.name} finished. Upm found {foundPackages?.Length} matches");
-            
+
                 // If it exists, get the last one from that list.
                 if (foundPackages != null && foundPackages.Length > 0)
                 {
@@ -142,7 +149,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                         context.PreviousPackageInfo = GetManifest(previousPackagePath);
                         context.DownloadAssembliesForPreviousVersion();
                     }
-            
+
                     // Fill the versions for later use
                     context.AllVersions = foundPackages[0].versions.all;
                 }
@@ -159,9 +166,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             return context;
         }
 
-        public static VettingContext CreateAssetStoreContext(string packageName, string packageVersion, string packagePath, string previousPackagePath)
+        public static VettingContext CreateAssetStoreContext(string packageName, string packageVersion, string packagePath, string previousPackagePath, IUnityWebRequestHandler unityWebRequestHandler)
         {
-            var context = new VettingContext();
+            var context = new VettingContext(unityWebRequestHandler);
             context.ProjectPackageInfo = new ManifestData() { path = packagePath, name = packageName, version = packageVersion };
             context.PublishPackageInfo = new ManifestData() { path = packagePath, name = packageName, version = packageVersion };
             context.PreviousPackageInfo = string.IsNullOrEmpty(previousPackagePath) ? null : new ManifestData() { path = previousPackagePath, name = packageName, version = "Previous" };
@@ -290,7 +297,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     {
                         previousVersion = prevVersion;
                         break;
-                    }    
+                    }
                 }
                 catch (Exception e) when (e is NpmUnusableException or ApplicationException)
                 {
@@ -317,13 +324,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     var packageDataZipFilename = PackageBinaryZipping.PackageDataZipFilename(projectPackageInfo.name, previousVersion);
                     var zipPath = Path.Combine(PreviousVersionBinaryPath, packageDataZipFilename);
                     
-                    var request = new UnityWebRequest(uri);
-                    request.timeout = 60; // 60 seconds time out
-                    request.downloadHandler = new DownloadHandlerFile(zipPath);
-                    var operation = request.SendWebRequest();
-                    while (!operation.isDone)
-                        Thread.Sleep(1);
-                    
+                    m_UnityWebRequestHandler.SendWebRequest(uri, new DownloadHandlerFile(zipPath), false);
+
                     Utilities.ExtractPackage(Path.Combine(tempPath, zipPath), tempPath, previousPackagePath, projectPackageInfo.name);
                     return previousPackagePath;
                 }
@@ -350,25 +352,20 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             ActivityLogger.Log("Retrieving assemblies for previous package version {0}", PreviousPackageInfo.version);
             var packageDataZipFilename = PackageBinaryZipping.PackageDataZipFilename(PreviousPackageInfo.name, PreviousPackageInfo.version);
             var zipPath = Path.Combine(PreviousVersionBinaryPath, packageDataZipFilename);
-            var uri = Path.Combine("https://artifactory.prd.it.unity3d.com/artifactory/pkg-api-validation/v2/", packageDataZipFilename);
+            var url = Path.Combine(k_ArtifactoryUrl, packageDataZipFilename);
 
-            var request = new UnityWebRequest(uri);
-            request.timeout = 60; // 60 seconds time out
-            request.downloadHandler = new DownloadHandlerFile(zipPath);
-            var operation = request.SendWebRequest();
-            while (!operation.isDone)
-                Thread.Sleep(1);
+            var request = m_UnityWebRequestHandler.SendWebRequest(url, new DownloadHandlerFile(zipPath), false);
 
 #if UNITY_2020_1_OR_NEWER
-            var requestError = request.result == UnityWebRequest.Result.ProtocolError
-                || request.result == UnityWebRequest.Result.ConnectionError
-                || request.result == UnityWebRequest.Result.DataProcessingError;
+            var requestError = request?.result == UnityWebRequest.Result.ProtocolError
+                || request?.result == UnityWebRequest.Result.ConnectionError
+                || request?.result == UnityWebRequest.Result.DataProcessingError;
 #else
             var requestError = request.isHttpError || request.isNetworkError;
 #endif
             if (requestError || !PackageBinaryZipping.Unzip(zipPath, PreviousVersionBinaryPath))
             {
-                ActivityLogger.Log(String.Format("Could not download binary assemblies for previous package version from {0}. {1}", uri, request.responseCode));
+                ActivityLogger.Log(String.Format("Could not download binary assemblies for previous package version from {0}. {1}", url, request.responseCode));
                 PreviousPackageBinaryDirectory = null;
             }
             else

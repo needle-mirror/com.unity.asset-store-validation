@@ -127,8 +127,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         bool CheckHiddenFolder(DirectoryInfo directoryInfo)
         {
             return directoryInfo.Name.StartsWith(".") || directoryInfo.Name.EndsWith("~") ||
-                   string.Equals(directoryInfo.Name, "csv", StringComparison.InvariantCultureIgnoreCase) ||
-                   directoryInfo.Name.EndsWith(".tmp", StringComparison.InvariantCultureIgnoreCase);
+                   string.Equals(directoryInfo.Name, "csv", StringComparison.InvariantCultureIgnoreCase);
         }
 
         bool CheckHiddenFile(FileInfo fileInfo)

@@ -121,7 +121,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
             }
 
             // publish locally for embedded and local packages
-            var context = VettingContext.CreatePackmanContext(packageId, validationType);
+            var context = VettingContext.CreatePackmanContext(packageId, validationType, UnityWebRequestHandler.GetInstance());
             return ValidatePackage(context, out report);
         }
 
@@ -186,7 +186,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
 
             try
             {
-                var context = VettingContext.CreateAssetStoreContext(packageName, packageVersion, packagePath, previousPackagePath);
+                var context = VettingContext.CreateAssetStoreContext(packageName, packageVersion, packagePath, previousPackagePath, UnityWebRequestHandler.GetInstance());
                 var testSuite = new ValidationSuite(SingleTestCompletedDelegate, AllTestsCompletedDelegate, context, report);
                 testSuite.RunSync();
                 return testSuite.testSuiteState == TestState.Succeeded;

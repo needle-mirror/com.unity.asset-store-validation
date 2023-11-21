@@ -96,13 +96,13 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.Valida
 
         public void AddError(string message)
         {
-            TestOutput.Add(new ValidationTestOutput() { Type = TestOutputType.Error, Output = message });
+            TestOutput.Add(new ValidationTestOutput { Type = TestOutputType.Error, Output = message });
             TestState = TestState.Failed;
         }
 
         protected void AddWarning(string message)
         {
-            TestOutput.Add(new ValidationTestOutput() { Type = TestOutputType.Warning, Output = message });
+            TestOutput.Add(new ValidationTestOutput { Type = TestOutputType.Warning, Output = message });
             
             // We do not want a warning to override errors, so the test shouldn't be flagged as Warning if it has failed already
             if (TestState == TestState.Failed) return;
@@ -111,7 +111,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.Valida
 
         protected void AddInformation(string message)
         {
-            TestOutput.Add(new ValidationTestOutput() { Type = TestOutputType.Information, Output = message });
+            TestOutput.Add(new ValidationTestOutput { Type = TestOutputType.Information, Output = message });
         }
     }
 }

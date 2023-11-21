@@ -35,8 +35,7 @@ class ValidationSuiteTestRunManager
     /// <returns></returns>
     public TestState RunValidations()
     {
-        return RunValidations(m_DependencieMode ? validationTests
-                                                : validationTests.Where(test => test.SupportedValidations.Contains(selectedValidationType)).ToArray());
+        return RunValidations(validationTests.Where(test => test.SupportedValidations.Contains(selectedValidationType)).ToArray());
     }
 
     TestState RunValidations(BaseValidation[] validationTests)

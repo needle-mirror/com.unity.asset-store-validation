@@ -20,21 +20,24 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         Dictionary<int, List<FileOrFolderInfo>> m_FilesDictionary = new Dictionary<int, List<FileOrFolderInfo>>();
         Dictionary<int, List<FileOrFolderInfo>> m_FoldersDictionary = new Dictionary<int, List<FileOrFolderInfo>>();
 
-        internal static string MoreThanOneAssemblyDefinitionErrorMessage(FileOrFolderInfo folder, List<FileOrFolderInfo> filesInFolder) => $"More than one assembly definition 'asmdef|asmref' file \"{AssembliesDefinitionFileNames(filesInFolder)} \" has been found in \"{ folder.Path }\" folder." +
-                                 $"Only one assembly definition is allowed per folder: { ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "more-than-one-assembly-definition")}";
-        internal static string ScriptWithoutAssemblyDefinitionAssociatedErrorMessage(FileOrFolderInfo folder, List<FileOrFolderInfo> filesInFolder) => $"The following C# script(s) \"{ScriptsDefinitionFileNames(filesInFolder)}\" were found in \"{ folder.Path }\" folder, but no corresponding asmdef or asmref file was found in " +
-                                       $"the folder or in ancestors folders: { ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "script-found-without-asmdef-or-asmref-associated")}";
+        internal static string MoreThanOneAssemblyDefinitionErrorMessage(FileOrFolderInfo folder, List<FileOrFolderInfo> filesInFolder, string sampleName) => GetSampleNameLine(sampleName) +
+                                 $"More than one assembly definition 'asmdef|asmref' file \"{AssembliesDefinitionFileNames(filesInFolder)} \" has been found in \"{folder.Path}\" folder. " +
+                                 $"Only one assembly definition is allowed per folder: {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "more-than-one-assembly-definition")}";
 
-        internal static string AssemblyDefinitionWithoutScriptAssociatedErrorMessage(FileOrFolderInfo folder, List<FileOrFolderInfo> filesInFolder) => $"Assembly definition file \"{AssembliesDefinitionFileNames(filesInFolder)} \" found in \"{ folder.Path }\" folder, but no C# script associated to it in this folder or in " +
-                              $"descendants folders: { ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "assembly-definition-found-without-script-associated")}";
+        internal static string ScriptWithoutAssemblyDefinitionAssociatedErrorMessage(FileOrFolderInfo folder, List<FileOrFolderInfo> filesInFolder) => $"The following C# script(s) \"{ScriptsDefinitionFileNames(filesInFolder)}\" were found in \"{folder.Path}\" folder, but no corresponding asmdef or asmref file was found in " +
+                                                   $"the folder or in ancestors folders: {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "script-found-without-asmdef-or-asmref-associated")}";
+
+        internal static string AssemblyDefinitionWithoutScriptAssociatedErrorMessage(FileOrFolderInfo folder, List<FileOrFolderInfo> filesInFolder, string sampleName) => GetSampleNameLine(sampleName) +
+                              $"Assembly definition file \"{AssembliesDefinitionFileNames(filesInFolder)} \" found in \"{folder.Path}\" folder, but no C# script associated to it in this folder or in " +
+                              $"descendants folders: {ErrorDocumentation.GetLinkMessage(k_DocsFilePath, "assembly-definition-found-without-script-associated")}";
 
         public AssembliesDefinitionValidation()
         {
             TestName = "Assemblies Definition";
             TestDescription = "Validates that the package assemblies definition have associated scripts and that scripts are associated to assemblies.";
             TestCategory = TestCategory.DataValidation;
+            DependsOn = new[] { typeof(SamplesStructureValidation) };
             SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
-
         }
 
         protected override void Run()
@@ -42,22 +45,51 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
-            var assemblyAndCsFiles = Directory.GetFiles(Context.PublishPackageInfo.path, "*", SearchOption.AllDirectories).Where(s => s.EndsWith(k_AssemblyDefExt, StringComparison.OrdinalIgnoreCase)
+            string packagepath = Context.PublishPackageInfo.path;
+            CheckAssembliesDefinitionInPath(packagepath, false);
+
+            string sampleFolderPath = Directory.GetDirectories(packagepath, "*", SearchOption.AllDirectories).FirstOrDefault(s => new DirectoryInfo(s).Name.Equals(k_SamplesTildeFolderName, StringComparison.InvariantCulture));
+
+            if (!string.IsNullOrWhiteSpace(sampleFolderPath))
+                foreach (var sample in Context.PublishPackageInfo.samples)
+                {
+                    if (!string.IsNullOrWhiteSpace(sample.path) && Directory.Exists(sample.path))
+                        CheckAssembliesDefinitionInPath(sample.path, true, sample.displayName);
+                }
+        }
+
+
+        /// <summary>
+        /// This method build the index that the algorithms use to make the validation, this way we hits the IO only once.
+        /// </summary>
+        /// <param name="pathChecked">full or relative path</param>
+        /// <param name="insideSampleTilde">If we are or not checking sample folder</param>
+        /// <param name="sampleName"> Sample name is apply</param>
+        private void CheckAssembliesDefinitionInPath(string pathChecked, bool insideSampleTilde, string sampleName = null)
+        {
+            m_FilesDictionary.Clear();
+            m_FoldersDictionary.Clear();
+
+            Func<string, bool> hiddenFileOrFolders = ss => (ss.EndsWith("~") && !ss.Equals(k_SamplesTildeFolderName, StringComparison.OrdinalIgnoreCase)) ||
+                                                               (!insideSampleTilde && ss.Equals(k_SamplesTildeFolderName, StringComparison.OrdinalIgnoreCase)) ||
+                                                               ss.StartsWith(".") ||
+                                                               ss.Equals(k_HiddenFolderCvs, StringComparison.OrdinalIgnoreCase);
+
+            var assemblyAndCsFiles = Directory.GetFiles(pathChecked, "*", SearchOption.AllDirectories).Where(s => (s.EndsWith(k_AssemblyDefExt, StringComparison.OrdinalIgnoreCase)
                                                                                                               || s.EndsWith(k_AssemblyRefExt, StringComparison.OrdinalIgnoreCase)
                                                                                                               || s.EndsWith(k_ScriptExt, StringComparison.OrdinalIgnoreCase))
-                                                                                                            .Where(s => !Path.GetFileName(s).StartsWith(".")).ToList();
+                                                                                                              && !s.Split(Path.DirectorySeparatorChar).Any(hiddenFileOrFolders)).ToList();
 
-            var foldersInPackage = Directory.GetDirectories(Context.PublishPackageInfo.path, "*", SearchOption.AllDirectories).Where(s => !new DirectoryInfo(s).Name.StartsWith(".") &&
-                                                                                                                               !new DirectoryInfo(s).Name.Equals(k_HiddenFolderCvs, StringComparison.OrdinalIgnoreCase) &&
-                                                                                                                              (!s.EndsWith("~") || new DirectoryInfo(s).Name.Equals(k_SamplesTildeFolderName, StringComparison.InvariantCulture))).ToList();
+            var foldersInPackage = Directory.GetDirectories(pathChecked, "*", SearchOption.AllDirectories).Where(s => (!s.Split(Path.DirectorySeparatorChar).Any(hiddenFileOrFolders))).ToList();
+            if (!assemblyAndCsFiles.Any()) return;
+
             AddPathsToDictionary(assemblyAndCsFiles, m_FilesDictionary);
             AddPathsToDictionary(foldersInPackage, m_FoldersDictionary);
 
             var pendingAsmdefOrRef = 0;
-            _ = CheckAssembliesDefinition(new FileOrFolderInfo() { Name = new DirectoryInfo(Context.PublishPackageInfo.path).Name, Path = Context.PublishPackageInfo.path, ParentFolderName = "", PathDepth = Context.PublishPackageInfo.path.Split(Path.DirectorySeparatorChar).Length - 2 },
+            _ = CheckAssembliesDefinition(new FileOrFolderInfo() { Name = new DirectoryInfo(pathChecked).Name, Path = pathChecked, ParentFolderPath = "", PathDepth = pathChecked.Split(Path.DirectorySeparatorChar).Length - 2 },
                                           false,
-                                          ref pendingAsmdefOrRef,
-                                          false);
+                                          ref pendingAsmdefOrRef, insideSampleTilde, sampleName);
         }
 
         void AddPathsToDictionary(List<string> filesPath, Dictionary<int, List<FileOrFolderInfo>> pathsDictionary)
@@ -70,9 +102,10 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
                 {
                     Name = filePathArray[key + 1],
                     Path = filePath,
-                    ParentFolderName = filePathArray[key],
+                    ParentFolderPath = Path.GetDirectoryName(filePath),
                     PathDepth = key
                 };
+
                 if (pathsDictionary.ContainsKey(key))
                     pathsDictionary[key].Add(fileRegister);
                 else
@@ -80,21 +113,19 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             }
         }
 
-        bool CheckAssembliesDefinition(FileOrFolderInfo folderRegister, bool ancestorFolderHasAsmdefOrRef, ref int pendingAsmdefOrRef, bool insideSampleTilde)
+        bool CheckAssembliesDefinition(FileOrFolderInfo folderRegister, bool ancestorFolderHasAsmdefOrRef, ref int pendingAsmdefOrRef, bool insideSampleTilde, string sampleName)
         {
             var filesInFolder = new List<FileOrFolderInfo>();
 
             if (m_FilesDictionary.ContainsKey(folderRegister.PathDepth + 1))
-                filesInFolder = m_FilesDictionary[folderRegister.PathDepth + 1].Where(s => s.ParentFolderName.Equals(folderRegister.Name, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            insideSampleTilde = insideSampleTilde || folderRegister.Name.Equals(k_SamplesTildeFolderName, StringComparison.InvariantCulture);
+                filesInFolder = m_FilesDictionary[folderRegister.PathDepth + 1].Where(s => s.ParentFolderPath.Equals(folderRegister.Path, StringComparison.OrdinalIgnoreCase)).ToList();
 
             var asmdefOrAsmrefFilesCount = AsmdefAndAsmrefFilesCount(filesInFolder);
             var previousAsmdefOrRefDefined = ancestorFolderHasAsmdefOrRef || asmdefOrAsmrefFilesCount > 0;
 
             var folderHasCsFilesDefined = filesInFolder.Any(s => s.Name.EndsWith(k_ScriptExt, StringComparison.OrdinalIgnoreCase));
 
-            var folderHasCsWithNoAsmdef = folderHasCsFilesDefined && asmdefOrAsmrefFilesCount == 0 && !insideSampleTilde;
+            var folderHasCsWithNoAsmdef = folderHasCsFilesDefined && asmdefOrAsmrefFilesCount == 0;
 
             //folder contains at least one script, .cs file
             if (folderHasCsFilesDefined)
@@ -118,17 +149,17 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
             //more than one assembly definition in the same folder
             if (asmdefOrAsmrefFilesCount > 1)
-                AddError(MoreThanOneAssemblyDefinitionErrorMessage(folderRegister, filesInFolder));
+                AddError(MoreThanOneAssemblyDefinitionErrorMessage(folderRegister, filesInFolder, sampleName));
 
             if (m_FoldersDictionary.ContainsKey(folderRegister.PathDepth + 1))
             {
-                foreach (var folderReg in m_FoldersDictionary[folderRegister.PathDepth + 1].Where(s => s.ParentFolderName == folderRegister.Name))
-                    folderHasCsWithNoAsmdef = CheckAssembliesDefinition(folderReg, previousAsmdefOrRefDefined, ref pendingAsmdefOrRef, insideSampleTilde) || folderHasCsWithNoAsmdef;
+                foreach (var folderReg in m_FoldersDictionary[folderRegister.PathDepth + 1].Where(s => s.ParentFolderPath == folderRegister.Path))
+                    folderHasCsWithNoAsmdef = CheckAssembliesDefinition(folderReg, previousAsmdefOrRefDefined, ref pendingAsmdefOrRef, insideSampleTilde, sampleName) || folderHasCsWithNoAsmdef;
             }
 
             if (pendingAsmdefOrRef > 0 && !folderHasCsFilesDefined && !folderHasCsWithNoAsmdef && asmdefOrAsmrefFilesCount > 0)
             {
-                AddError(AssemblyDefinitionWithoutScriptAssociatedErrorMessage(folderRegister, filesInFolder));
+                AddError(AssemblyDefinitionWithoutScriptAssociatedErrorMessage(folderRegister, filesInFolder, sampleName));
                 pendingAsmdefOrRef--;
             }
 
@@ -138,21 +169,15 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             return folderHasCsWithNoAsmdef;
         }
 
-        static string AssembliesDefinitionFileNames(List<FileOrFolderInfo> filesInFolder)
-        {
-            return string.Join(", ", filesInFolder.Where(s => s.Name.EndsWith(k_AssemblyDefExt, StringComparison.OrdinalIgnoreCase)
+        private static string GetSampleNameLine(string sampleName) => (string.IsNullOrWhiteSpace(sampleName) ? string.Empty : "In the Sample: " + sampleName + ". ");
+
+        static string AssembliesDefinitionFileNames(List<FileOrFolderInfo> filesInFolder) => string.Join(", ", filesInFolder.Where(s => s.Name.EndsWith(k_AssemblyDefExt, StringComparison.OrdinalIgnoreCase)
                                                            || s.Name.EndsWith(k_AssemblyRefExt, StringComparison.OrdinalIgnoreCase)).Select(s => s.Name));
-        }
 
-        static string ScriptsDefinitionFileNames(List<FileOrFolderInfo> filesInFolder)
-        {
-            return string.Join(", ", filesInFolder.Where(s => s.Name.EndsWith(k_ScriptExt, StringComparison.OrdinalIgnoreCase)).Select(s => s.Name));
-        }
+        static string ScriptsDefinitionFileNames(List<FileOrFolderInfo> filesInFolder) => string.Join(", ", filesInFolder.Where(s => s.Name.EndsWith(k_ScriptExt, StringComparison.OrdinalIgnoreCase)).Select(s => s.Name));
 
-        static int AsmdefAndAsmrefFilesCount(List<FileOrFolderInfo> filesInFolder)
-        {
-            return filesInFolder.Count(s => s.Name.EndsWith(k_AssemblyDefExt, StringComparison.OrdinalIgnoreCase)
+        static int AsmdefAndAsmrefFilesCount(List<FileOrFolderInfo> filesInFolder) => filesInFolder.Count(s => s.Name.EndsWith(k_AssemblyDefExt, StringComparison.OrdinalIgnoreCase)
                                          || s.Name.EndsWith(k_AssemblyRefExt, StringComparison.OrdinalIgnoreCase));
-        }
+
     }
 }

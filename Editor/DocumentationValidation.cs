@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Editor.ValidationSuite.ValidationSuite.ValidationTests;
 using UnityEditor.PackageManager.AssetStoreValidation.Models;
 using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite;
+using UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite.ValidationTests;
 
 namespace UnityEditor.PackageManager.AssetStoreValidation
 {
-    class DocumentationValidation : BaseHttpValidation
+    class DocumentationValidation : BaseValidation
     {
         static readonly string k_DocsFilePath = "documentation_validation.html";
         const string k_DocumentationFolderName = "Documentation~";
@@ -45,18 +45,19 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         };
 
         Regex m_DocumentationFolderRegex = new Regex(k_DocumentationFolderName, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private IUnityWebRequestHandler m_UnityWebRequestHandler;
 
-        public DocumentationValidation()
+        public DocumentationValidation(IUnityWebRequestHandler unityWebRequestHandler)
         {
             TestName = "Documentation";
             TestDescription = "A package must contain basic usage documentation for consumers.";
             TestCategory = TestCategory.DataValidation;
             SupportedValidations = new[] { ValidationType.Structure, ValidationType.AssetStore, ValidationType.InternalTesting };
+            m_UnityWebRequestHandler = unityWebRequestHandler;
         }
 
         protected override void Run()
         {
-            base.Run();
             // Start by declaring victory
             TestState = TestState.Succeeded;
 
@@ -73,13 +74,13 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             }
             else
             {
-                docsUrlStatus = CheckUrlStatus(docsUrl);
+                docsUrlStatus = m_UnityWebRequestHandler.IsUrlReachable(docsUrl);
                 if (docsUrlStatus == UrlStatus.Unreachable)
                     AddWarning(UnreachableUrlMessage(docsUrl));
             }
 
             var offlineDocsResult = ValidateOfflineDocs();
-            
+
             // Shortcut out when things are ok
             if (docsUrlStatus != UrlStatus.None || offlineDocsResult == OfflineDocsStatus.Ok) return;
 
