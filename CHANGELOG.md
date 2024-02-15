@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2024-02-15
+
+### Added
+- Added a validation for the package description to validate the length of the description is under 200 characters
+- Added a validation to warn the user about the presence of zip files in a package
+
 ## [0.4.0] - 2023-11-21
 
 ### Fixed
