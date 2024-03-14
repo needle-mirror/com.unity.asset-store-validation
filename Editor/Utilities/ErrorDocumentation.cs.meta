@@ -1,15 +1,2 @@
 fileFormatVersion: 2
-<<<<<<< HEAD:Editor/AssemblyInfo.cs.meta
 guid: 4e4267811ffdf4a44a3aff9a0eaf7f37
-=======
-guid: 83673f5b67df64ebfbc7e940876bac45
->>>>>>> ccdff87e6ce487351cf35d318eac8c51eb0506c7:Editor/Utilities/ErrorDocumentation.cs.meta
-MonoImporter:
-  externalObjects: {}
-  serializedVersion: 2
-  defaultReferences: []
-  executionOrder: 0
-  icon: {instanceID: 0}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
