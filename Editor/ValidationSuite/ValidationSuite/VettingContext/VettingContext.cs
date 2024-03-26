@@ -94,7 +94,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                     ActivityLogger.Log(
                         $"Package {packageInfo.packageId} {(context.PackageExistsOnProduction ? "is" : "is not")} in the Unity registry");
                 }
-                catch (Exception e) when (e is ApplicationException or NpmUnusableException)
+                catch (Exception e) when (e is ApplicationException)
                 {
                     ActivityLogger.Log($"An error occurred when trying to verify if the package already exists in the Unity registry\n{e}");
                 }
@@ -299,7 +299,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation.ValidationSuite
                         break;
                     }
                 }
-                catch (Exception e) when (e is NpmUnusableException or ApplicationException)
+                catch (Exception e) when (e is ApplicationException)
                 {
                     ActivityLogger.Log(e.Message);
                     break;

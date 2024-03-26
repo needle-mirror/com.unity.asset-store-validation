@@ -4,8 +4,8 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 {
     interface IPackageInfoHelper
     {
-        string GetPackageNameFromReferenceName(string referenceName);
-        string GetPackageNameFromGuid(string referenceGuid);
+        string GetPackageIdFromReferenceName(string referenceName);
+        string GetPackageIdFromGuid(string referenceGuid);
         Dictionary<string, string> GetDllsFromRegisteredPackages();
     }
 }

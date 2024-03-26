@@ -1,23 +1,38 @@
 # Changelog
+
 All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2024-03-26
+
+### Added
+
+- Dependencies validation was added.
+
+### Changed
+
+- Refactor the MandatoryPackageUnityFieldValidation.cs class to make it clearer, with better logic
+- NPMUnusableException definition was deleted
+
 ## [0.5.1] - 2024-03-14
 
 ### Fixed
+
 - Warning in console about .meta file GUID not being able to be extracted has been removed.
 
 ## [0.5.0] - 2024-02-15
 
 ### Added
+
 - Added a validation for the package description to validate the length of the description is under 200 characters
 - Added a validation to warn the user about the presence of zip files in a package
 
 ## [0.4.0] - 2023-11-21
 
 ### Fixed
+
 - Fix false negative validation result when checking asmdef|asmref in nested folders with same parent folder name in AssembliesDefinitionValidation
 - Fix files inside hidden folders taken into account in AssembliesDefinitionValidation
 - Unity and UnityRelease version comparison
@@ -76,4 +91,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - ValidationSuiteReport.GetReport returning null for existing JSON reports
 
 ## [0.1.3] - 2023-05-30
+
 - First release of Asset Store Validation.

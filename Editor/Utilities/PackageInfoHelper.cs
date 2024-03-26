@@ -12,14 +12,15 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         /// </summary>
         /// <param name="referenceName"></param>
         /// <returns></returns>
-        public string GetPackageNameFromReferenceName(string referenceName)
+        public string GetPackageIdFromReferenceName(string referenceName)
         {
             try
             {
                 var assembly = Assembly.Load(referenceName);
                 var packageInfo = PackageInfo.FindForAssembly(assembly);
 
-                return packageInfo == null ? string.Empty : packageInfo.name;
+                // not using packageId because if the package is local the packageId has the local path and not the version
+                return packageInfo == null ? string.Empty : packageInfo.name + "@" + packageInfo.version;
             }
             catch (FileNotFoundException)
             {
@@ -32,7 +33,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
         /// </summary>
         /// <param name="referenceGuid"></param>
         /// <returns></returns>
-        public string GetPackageNameFromGuid(string referenceGuid)
+        public string GetPackageIdFromGuid(string referenceGuid)
         {
             var objectPath = AssetDatabase.GUIDToAssetPath(referenceGuid);
             if (string.IsNullOrWhiteSpace(objectPath))
@@ -41,7 +42,9 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
             }
 
             var packageInfo = PackageInfo.FindForAssetPath(objectPath);
-            return packageInfo == null ? string.Empty : packageInfo.name;
+            
+            // not using packageId because if the package is local the packageId has the local path and not the version
+            return packageInfo == null ? string.Empty : packageInfo.name + "@" + packageInfo.version; 
         }
 
         /// <summary>
@@ -62,7 +65,7 @@ namespace UnityEditor.PackageManager.AssetStoreValidation
 
                 foreach (var path in assets)
                 {
-                    registeredPackagesDlls.TryAdd(Path.GetFileNameWithoutExtension(path), registeredPackage.name);
+                    registeredPackagesDlls.TryAdd(Path.GetFileNameWithoutExtension(path), registeredPackage.packageId);
                 }
             }
 
